@@ -79,9 +79,8 @@ def run(session: Session) -> Result:
             └──────┬───────┘
                    │ user reply
                    ▼
-              (回 running)
-   任意状态遇到 error / 超出终止阈值 ─▶ ┌──────────┐
-                                        │ failed   │
+              (回 running)              ┌──────────┐
+   任意状态遇到 error / 超出终止阈值 ─▶ │ failed   │
                                         └──────────┘
 ```
 
