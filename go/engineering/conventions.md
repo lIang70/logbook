@@ -50,7 +50,7 @@ return defaultAssemble(ctx, req)
 
 ## 5. 仓库与依赖
 
-- **`go.work` 分成两个结论**：多模块仓（flowcraft 那种十几个 module）把它当工作区入口**提交**，CI 才能整仓构建；单模块仓（opencraft）只需要 `go.work.sum`，本地联调用 `replace` 临时加、提交前删。
+- **`go.work` 分成两个结论**：多模块仓（flowcraft 那种十几个 module）把它当工作区入口**提交**，CI 才能整仓构建；单模块仓（opencraft）只需 `go.mod` + `go.sum`，`go.work` / `go.work.sum` 都不进版本库（没有 `go.work` 就不会生成 `.sum`），本地联调用 `replace` 临时加、提交前删。
 - **"看起来很通用"的包要敢删**：泛型 actor、无人使用的 helper 层，占着 API 表面就是负债。
 - 多模块的发布顺序见 [多模块发布与发布工程](release.md)。
 

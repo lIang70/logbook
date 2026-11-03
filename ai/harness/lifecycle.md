@@ -195,7 +195,7 @@ A2A 协议把"跨进程的 agent 任务"标准化成一套状态机。**这套�
 - **进程级 child 默认继承父的 fd**——子 agent 能写父进程在用的 socket / 文件。**显式 `Setpgid` + `CloseExtraFiles`**。
 - **Checkpoint ≠ log**。log 是事件流;checkpoint 是**可恢复的 state**(已发副作用 + 幂等键)。log 当 checkpoint 用,resume 时副作用会双跑。
 - **Grace period 不能省**。K8s 默认 30s,生产调到 60-90s;低于 30s 几乎一定丢 checkpoint。
-- **文件锁用 advisory `flock` 进程崩了不释放**——要 `OFD`(open file description)锁,跟着 fd 走,`close` 一定释放。
+- **文件锁的坑不在「崩了不释放」，在「残留锁文件 + NFS 陈旧锁」**。本地 `flock` 会随进程退出（最后一个 fd 关闭）自动释放；NFS 上的锁由锁服务管理，进程崩溃后可能长期挂住。要「跟着 fd 走、close 一定释放」就用 `OFD`(open file description) 锁；跨主机互斥只能靠租约 + 心跳。
 
 ## 10. 最小可用的 harness 设计清单(MVP)
 

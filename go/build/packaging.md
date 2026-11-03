@@ -70,7 +70,7 @@ var workspaceSchema embed.FS
 
 - 缓存杀手：`-gcflags` 变更、embed 目录里改文件、`-trimpath` 是否一致、`GOFLAGS` 里加 `-race`。
 - **可复现**：锁定 Go 版本（`go.mod` 的 toolchain 行 + CI 镜像）、`-trimpath`、`-buildvcs=false`、依赖走 vendor 或校验和代理。
-- **多模块**：`go.work` 不进版本库（见 [Go 工程约定](../engineering/conventions.md)），CI 用 `go work` 临时生成或用 module 矩阵逐个构建。
+- **多模块**：`go.work` **要提交**（见 [Go 工程约定](../engineering/conventions.md)），CI 才能整仓构建；单模块仓只在本地临时用、不进版本库。
 
 ## 7. 清单
 

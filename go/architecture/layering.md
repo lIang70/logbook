@@ -35,11 +35,19 @@ type ContextProvider interface {
 
 var factories = map[string]func(Params) (ContextProvider, error){}
 
-func Register(impl string, f func(Params) (ContextProvider, error)) {
+func Register(impl string, f func(Params) (ContextProvider, error)) error {
     if _, dup := factories[impl]; dup {
-        panic("memory: duplicate impl " + impl) // 启动期炸，不留运行期兜底
+        return errdefs.Conflictf("memory: duplicate impl %s", impl) // 装配期当启动失败
     }
     factories[impl] = f
+    return nil
+}
+
+// MustRegister 只留给 init 期已知良好的静态集合。
+func MustRegister(impl string, f func(Params) (ContextProvider, error)) {
+    if err := Register(impl, f); err != nil {
+        panic(err)
+    }
 }
 ```
 
@@ -51,7 +59,7 @@ func Register(impl string, f func(Params) (ContextProvider, error)) {
 
 `Scope` 用 `RuntimeID + UserID + AgentID` 三分区。这条要当 API 稳定面看待：改名就是破坏性变更。
 
-> 为什么注册冲突要 panic：配置错就该起不来。运行期兜底会把"两个实现抢同一个名字"变成一半请求走 A、一半走 B 的幽灵 bug。
+> 注册冲突必须让**装配期就失败**，但不等于 `Register` 要 panic：返回 `Conflict` 让装配器拒绝启动（见 [Go 工程约定](../engineering/conventions.md)），`panic` 只留给 `MustRegister` 那种 init 期静态集合。真正要避免的是**运行期兜底**——它会把"两个实现抢同一个名字"变成一半请求走 A、一半走 B 的幽灵 bug。
 
 ## 3. 分层带来的两个副作用
 
