@@ -173,7 +173,7 @@ Linux CFS 内部细节看 [Process](process.md) 的 8.2 节；Go GMP 内部细�
 - “**调度器越公平越好**”：对延迟敏感任务，“公平”意味着把时间片给不相干的任务；需要主动分组/绑核。
 - “**CFS 是 Linux 唯一的调度器**”：除 CFS 外还有 `SCHED_FIFO/RR/DEADLINE`、`EEVDF`（6.6 之后）、`sched_ext`（6.12+）等多种路径。
 
-## 相关阅读
+## 相关链接
 
 - [Process](process.md)：CFS 内部细节、上下文切换与观测
 - [Concurrency](concurrency.md)：M:N / 1:1 / N:1 线程模型

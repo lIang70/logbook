@@ -3,6 +3,14 @@
 这一篇聚焦“并发工程”本身：线程同步原语、内存一致性模型、常见并发 bug、以及 Linux 上的同步实现细节（如 futex/锁/屏障等）。  
 进程/线程基础、调度算法、IPC 请看 [Process](process.md)。
 
+## TL;DR
+
+- 并发正确性只有一把统一尺子：**happens-before**。锁释放/获取、join、原子 acquire/release、condvar 通知都能建立它——**说不出“哪条 happens-before 保护这个字段”，就是数据竞争**。
+- 原语选型看**临界区长度**：极短 → 自旋；可能睡眠/含 I/O → 睡眠锁（mutex / semaphore）；读远多于写 → 读写锁或 RCU。
+- 一致性强弱决定你要不要屏障：x86 是 TSO（可能出现 Store→Load 可见性延迟），ARM/Power 是弱一致——**“x86 上测通过”不等于对**。
+- 无锁不是更快：**伪共享和 ABA 是无锁的第一个坑**；而且线程数超过核心数时，锁竞争往往比 CPU 本身更主导延迟。
+- Linux 的真实实现是**用户态快路径 + futex 慢路径**：无竞争不陷内核，有竞争才睡眠——所以“加锁就进内核”是错的，这也是“先自旋再睡眠”自适应策略的由来。
+
 ## 1. 线程同步机制 (Synchronization Primitives)
 
 在多线程环境下，为保证数据一致性，需要使用同步机制。
@@ -270,7 +278,14 @@ private:
 - **CPU 屏障（smp_mb/rmb/wmb 的直觉）**：限制跨核可见性与硬件层面的重排。
 - 在内核/无锁结构中，“看起来正确”的代码可能因为缺少屏障而在弱一致性架构上出错。
 
-## 相关阅读
+## 相关链接
 
-- [Process](process.md)：进程/线程基础、调度算法、IPC
-- 死锁：已并入本文“常见并发 Bug → 死锁”
+- [Process](process.md)：进程/线程基础、调度算法、上下文切换与观测
+- [Payload（系统负载与可观测性指标）](payload.md)：上下文切换数 / runqueue 长度这些指标怎么读
+- [Memory Management](memory.md)：内存序、原子操作与可见性的硬件基础
+- [本地 IPC 的工程语义](ipc.md)：跨进程同步（而不是线程）的另一条路
+- [Go Concurrency Patterns](../go/concurrency/concurrency_patterns.md)：把原语用成模式的层面
+- [Go Scheduler (GMP 模型)](../go/runtime/scheduler.md)：M:N 线程模型的一个真实实现
+- [调度器对比](scheduler_comparison.md)：CFS / ULE / GMP / tokio 的横向比较
+
+> 死锁已并入本文「常见并发 Bug → 死锁」小节，不再单独成篇。

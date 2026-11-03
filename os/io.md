@@ -1,5 +1,13 @@
 # I/O Management
 
+## TL;DR
+
+- 五种模型的分水岭只有一条：**第二阶段（内核→用户空间拷贝）会不会阻塞进程**。前四种都是同步 I/O，**只有 AIO 是真异步**——“非阻塞”和“异步”不是一回事。
+- 多路复用的价值是**一个线程盯住 N 个连接**，代价是“就绪了你还得自己 `read`”——Reactor 模式的所有实现细节都绕这一点。
+- epoll 比 select/poll 强的地方不是“零拷贝”：`epoll_ctl` 注册时拷进内核，`epoll_wait` 只拷回就绪事件（并没有 mmap）。真正的优势是**不再线性扫描全量 fd**。
+- **ET 与非阻塞是绑定关系**：边缘触发只通知一次，必须循环读到 `EAGAIN`，否则剩下的数据永远等不到下一次通知。LT 编程简单，但会反复叫你。
+- 零拷贝的判据是“**用户空间是否参与**”：`sendfile` 把数据留在内核（配 SG-DMA 才能做到零 CPU 拷贝），而 `mmap + write` 只省了一次拷贝。
+
 ## 五种 I/O 模型
 
 Unix 网络编程中定义了 5 种 I/O 模型。一个 I/O 操作通常分为两个阶段：
@@ -135,3 +143,12 @@ Disk -> Kernel Buffer -> User Buffer -> Kernel Socket Buffer -> Network
 
 - **IOPS (Input/Output Operations Per Second)**：每秒 I/O 次数，随机读写性能常用指标
 - HDD IOPS 通常较低（~100-200），SSD 更高（万级/十万级，视介质与队列深度而定）
+
+## 相关链接
+
+- [File System](filesystem.md)：VFS / inode / page cache（I/O 的上层抽象）
+- [Linux 网络栈 (Network Stack)](network_stack.md)：socket 侧的完整路径
+- [Payload（系统负载与可观测性指标）](payload.md)：`%wa` / `await` / `avgqu-sz` 怎么读
+- [Process](process.md)：阻塞与上下文切换的代价
+- [netpoll (Go 网络 I/O 模型)](../go/runtime/netpoll.md)：epoll 在 Go 运行时里的封装与调度集成
+- [Concurrency](concurrency.md)：阻塞/唤醒与调度行为

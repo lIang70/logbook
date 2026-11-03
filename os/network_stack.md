@@ -235,7 +235,7 @@ io_uring_cqe_seen(&ring, cqe);
 - “**XDP 能替代 iptables**”：能力范围不同；XDP 看不到 conntrack，做不到 NAT 之类的有状态逻辑。
 - “**零拷贝一定省 CPU**”：注册/校验/回收的开销在短连接场景可能反咬；按业务测。
 
-## 相关阅读
+## 相关链接
 
 - [I/O Management](io.md)：五种 I/O 模型、epoll LT/ET、零拷贝基础
 - [Process](process.md)：上下文切换与多核调度影响网络线程设计

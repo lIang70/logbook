@@ -1,5 +1,13 @@
 # File System
 
+## TL;DR
+
+- 内核用 VFS 把“所有文件系统”化成四个对象：**superblock（整卷）/ inode（元数据）/ dentry（名字→inode）/ file（这次打开的实例，带偏移量）**；`open/read/write` 只是把请求转发给具体实现。
+- **文件名不在 inode 里**，在 dentry 里。所以硬链接 = 多个 dentry 指向同一 inode，`ls -l` 的 nlink 就是这个计数。
+- **inode 唯一标识文件，不唯一标识名字**：硬链接删一个名字只是 nlink-1，数据还在；软链接有**独立 inode**、内容就是路径，所以能跨文件系统，但源删了就悬空。
+- **fd 是进程级索引**，指向打开文件表里的条目——这解释了两件事：fd 会被子进程继承（除非 CLOEXEC），而重定向只是让两个 fd 指向同一个 file 对象（**共享偏移量**）。
+- 工程抓手：判断“是不是同一个文件”看 **inode**（`stat`），不是看路径；判断“还有没有人在用”看 **nlink + `lsof`**（已经 unlink 但被持有的文件会占着磁盘）。
+
 ## VFS (Virtual File System)
 
 VFS 是 Linux 内核中的一个软件层，用于给用户空间程序提供文件系统接口，同时提供内核中的一个抽象层以支持不同类型的文件系统。
@@ -50,3 +58,12 @@ graph TD
 ## 存储/块设备相关（已移动）
 
 `磁盘调度/RAID/IOPS` 更贴近 I/O/存储主题，已移动到 [I/O Management](io.md)。
+
+## 相关链接
+
+- [I/O Management](io.md)：磁盘调度、RAID、IOPS、零拷贝
+- [Process](process.md)：fd 传递、fork/exec 与 CLOEXEC、文件锁
+- [Memory Management](memory.md)：page cache、mmap、缺页
+- [本地 IPC 的工程语义](ipc.md)：socket 文件也是 inode（权限位就是访问控制）
+- [沙箱与进程隔离](sandbox.md)：用 mount namespace 改文件系统视图
+- [Concurrency](concurrency.md)：文件锁与内核同步行为

@@ -1,5 +1,13 @@
 # Payload（系统负载与可观测性指标）
 
+## TL;DR
+
+- **Load Average 不是 CPU 使用率**：它是 runnable + **不可中断（D 态）任务**数的滑动平均（1/5/15 分钟）。所以“load 高但 CPU 空闲”通常是 IO 阻塞，不是算力不足。
+- 必须**成对看**：CPU 高 + load 高 = 算力不足；CPU 低 + load 高 = 卡在 D 态（磁盘 / NFS / 缺页）；CPU 高 + load 低 = 单线程热点（扩机器没用）。
+- **`%wa` 是 CPU 视角的等待，不是磁盘视角的瓶颈**：磁盘到底有没有问题看 `iostat` 的 `await` / `avgqu-sz`。
+- 内存看 **`available`**（不是 `free`）：`cached` / `buffers` 被占满才是正常态；真正的信号是 `si/so` 持续非零（在换页）= 已经慢了。
+- 应用层只看**分位数 + 错误率**：P99 与 5xx 一起看才有意义，单指标一定骗人（这也适用于 Agent 的成本 / 延迟，见 [可观测性](../ai/harness/observability.md)）。
+
 ## 服务器负载的衡量标准
 
 > 评估服务器性能, 稳定性和资源利用率的关键指标.
@@ -105,9 +113,11 @@
 
 通过综合这些指标, 可以全面评估服务器负载并制定针对性策略
 
-## 关联阅读（把指标落到系统机制）
+## 相关链接（把指标落到系统机制）
 
 - 负载与运行队列/上下文切换：[Process](process.md)
 - 锁竞争、活锁/饥饿、futex 与调度行为：[Concurrency](concurrency.md)
 - OOM / swap / 缺页异常：[Memory Management](memory.md)
 - I/O 多路复用、零拷贝、磁盘 I/O：[I/O Management](io.md)
+- 性能剖析（把“哪个指标异常”变成“哪一行代码慢”）：[pprof 与性能读法](../go/runtime/pprof.md)
+- 应用侧日志 / trace / 成本归因：[可观测性](../go/engineering/observability.md)

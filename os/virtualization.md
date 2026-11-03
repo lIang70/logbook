@@ -222,7 +222,7 @@ runc run mycontainer
 - “**用了 Docker 镜像扫描就安全了**”：扫描发现的是已知 CVE，但**配置错误**（特权、挂载）通常占安全事件的更大比例。
 - “**只要不 `--privileged` 就隔离**”：错。User namespace 没启用、敏感路径挂载、seccomp 缺失，每一项都能绕过“看起来很安全”的配置。
 
-## 相关阅读
+## 相关链接
 
 - [Process](process.md)：进程基础、调度器与上下文切换
 - [I/O Management](io.md)：I/O 多路复用与零拷贝

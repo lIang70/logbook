@@ -1,5 +1,13 @@
 # Memory Management
 
+## TL;DR
+
+- 虚拟内存的全部价值是**多一层间接**：MMU 查页表把虚拟地址映射到物理页框，于是进程看到连续空间、物理上可以碎片化、还能换出到磁盘。
+- **地址转换的真实成本是 TLB 命中率**：页表 miss 要多次访存，所以大页（huge page）和局部性比“堆多大”更影响性能。
+- 页面置换里**只有 LRU 的近似（Clock/NRU）可实现**：OPT 只是理论下界；FIFO 会出现 Belady 异常（加内存反而缺页更多）。
+- **缺页 ≠ 段错误**：先校验地址是否在 VMA——不在就是 SIGSEGV；在但页表 valid=0 才走“读盘 → 改页表 → 重执行指令”。
+- 两级分配器解决两类碎片：**伙伴系统管物理页框（外部碎片）**，**slab 管内核小对象（内部碎片）**——Go 的 mspan / size class 是同一思想的用户态版。
+
 ## 虚拟内存 (Virtual Memory)
 
 虚拟内存是计算机系统内存管理的一种技术。它使得应用程序认为它拥有连续的可用的内存（一个连续完整的地址空间），而实际上，它通常是被分隔成多个物理内存碎片，还有部分暂时存储在外部磁盘存储器上，在需要时进行数据交换。
@@ -116,3 +124,12 @@ sequenceDiagram
 - 基于伙伴系统之上，用于管理**内核小对象**（如 `task_struct`, `inode`）。
 - 解决**内部碎片**问题。
 - 使用对象缓存池（Cache），快速分配和回收固定大小的对象。
+
+## 相关链接
+
+- [Process](process.md)：栈、上下文切换与页表切换（CR3）的关系
+- [Concurrency](concurrency.md)：内存序、原子操作与可见性
+- [File System](filesystem.md)：page cache 与 mmap 把文件变成内存
+- [Payload（系统负载与可观测性指标）](payload.md)：OOM / swap / 缺页的观测指标
+- [Go Memory Allocator (内存分配器)](../go/runtime/memory_allocator.md)：用户态的两级分配（mspan / size class）
+- [GC](../go/runtime/gc.md)：虚拟内存之上，Go 自己又管了一层

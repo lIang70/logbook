@@ -1,5 +1,13 @@
 # Process (进程)
 
+## TL;DR
+
+- 进程是**资源容器**（地址空间、fd 表、信号处理），线程是**调度单位**；一次上下文切换的真成本在“**换页表（CR3）+ cache/TLB 变冷**”，不在寄存器保存那几下。
+- 状态里最容易漏的是 **D 态（不可中断睡眠）**：它计入 load average，但 `kill -9` 也打不断（在等 IO）。所以“高负载”必须先分辨 R 和 D。
+- **`clone()` 是 Linux 的统一入口**：进程 / 线程只是 clone 标志不同（共享地址空间、fd 表、信号处理），并不存在独立的 “create_thread” 系统调用。
+- 系统调用与中断**不同源**：syscall = 同一条指令上的同步陷入，中断 = 外部设备的异步事件，异常介于两者之间。对工程更有用的分类是**可恢复还是不可恢复**。
+- CFS 用 **vruntime** 做公平，粒度由 `sched_latency` / `min_granularity` 决定；观测入口是 `/proc/<pid>/schedstat`、`/proc/stat`、`vmstat` 的 `cs`——**先看证据，再谈调参**。
+
 这一篇聚焦“进程作为 OS 抽象”的基础：状态模型、`fork/exec`、调度算法、IPC 等；并补充线程/协程的对比位置。  
 并发原语（锁/条件变量/信号量/内存模型/RCU/futex 等）请看 [Concurrency](concurrency.md)。
 
@@ -237,7 +245,14 @@ stateDiagram-v2
   - `perf top/record`：热点与锁竞争（配合符号）
 - **ftrace/tracefs**（更深入时）：跟踪调度事件、锁事件
 
-## 相关阅读
+## 相关链接
+
+- [Concurrency](concurrency.md)：同步原语、内存一致性、futex（本篇只讲到线程模型）
+- [本地 IPC 的工程语义](ipc.md)：IPC 的工程下半场（socket 权限、stale、fd 传递）
+- [Memory Management](memory.md)：地址空间、页表与 CR3 切换到底改了什么
+- [Payload（系统负载与可观测性指标）](payload.md)：load average / `%wa` / `cs` 的读法
+- [调度器对比](scheduler_comparison.md)：CFS 与其它调度器的横向比较
+- [Go Scheduler (GMP 模型)](../go/runtime/scheduler.md)：用户态调度与内核调度交界的地方
 
 - [Concurrency](concurrency.md)：线程同步原语、内存一致性模型、futex/RCU 等更偏“并发工程/系统实现”的内容
 - [Memory Management](memory.md)：缺页异常与虚拟内存
