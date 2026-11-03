@@ -1,10 +1,19 @@
-# Markdown notes: formatting/convention checks + the published site.
-# The check targets are a thin wrapper over scripts/format.py (stdlib);
-# the site targets are a thin wrapper over web/build.py (Zensical), and all
+# Markdown notes: formatting + convention checks, and the published site.
+# Two tools with distinct jobs:
+#   - prettier owns *formatting* (tables, list markers, blank lines). It runs
+#     through npx at a pinned version, so no package.json or node_modules is
+#     committed and the output cannot drift with a version bump.
+#   - scripts/format.py owns *repo policy* (fence language tags, no `---`, no
+#     emoji, relative links must resolve, no heading jumps). Prettier has no
+#     notion of any of these, which is why both still run.
+#
+# The site targets are a thin wrapper over web/build.py (Zensical), and all
 # web code/config lives under web/.
 
 PYTHON ?= python3
 FORMAT := scripts/format.py
+PRETTIER := npx --yes prettier@3.9.10
+MDGLOB := "**/*.md"
 
 .DEFAULT_GOAL := help
 .PHONY: help format format-check format-strict check stats site site-check serve clean
@@ -12,10 +21,12 @@ FORMAT := scripts/format.py
 help: ## list targets
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-format: ## fix whitespace, line endings, blank lines, fence tags in place
+format: ## fix markup (prettier) then whitespace/fences (format.py)
+	@$(PRETTIER) --write --log-level warn $(MDGLOB)
 	@$(PYTHON) $(FORMAT) --quiet
 
-format-check: ## report only; exit 1 on errors (fences, broken links)
+format-check: ## report only; exit 1 on prettier drift, fences, or broken links
+	@$(PRETTIER) --check $(MDGLOB) || { echo "  -> run: make format"; exit 1; }
 	@$(PYTHON) $(FORMAT) --check
 
 format-strict: ## report only; warnings (emoji, `---`, heading jumps) also fail

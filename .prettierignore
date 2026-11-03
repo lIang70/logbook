@@ -1,0 +1,8 @@
+# Local-only, never formatted (it is not committed and its content is authoritative).
+AGENTS.md
+
+# The notes repository ignores everything else in whitelist mode, but be explicit
+# for the generated directories so a stray checkout never gets reformatted.
+web/.build/
+web/.venv/
+web/mkdocs.generated.yml

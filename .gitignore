@@ -22,6 +22,8 @@
 !Makefile
 !scripts
 !scripts/**
+!.prettierrc.json
+!.prettierignore
 
 # ── Published site: config, hooks, templates, CSS, build script ──
 !web
