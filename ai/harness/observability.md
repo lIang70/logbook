@@ -117,7 +117,7 @@
 
 - 每个 span 落库时带 `cost_usd`。先约定口径：`tokens.in` 是**未命中缓存的新输入**，`cache_write` / `cache_read` 单列；于是 `cost_usd = tokens.in * base_input_price + tokens.cache_write * write_price + tokens.cache_read * read_price + tokens.out * output_price`。如果 `tokens.in` 已含缓存 token，就得先减掉再乘，别两种读法混用。
 - **分项报**（input / cache / output 三列），方便定位"成本突然爆了"是哪一项。
-- 每个 agent / sub-agent 维护自己的 token / cost 预算（`budget_usd_per_session`）；超出 80% 触发警告，100% 触发降级（缩短回答、关闭某个 tool）。
+- 每个 agent / sub-agent 的 token / cost 预算**不是标量而是树**：`run` 预算向下 **reserve** 给子 agent，结束后 **settle** 归还，每个 span 落 `budget_id` 而不是各自存一个 `budget_usd_per_session`。扁平预算在 fan-out 下会超支 N 倍（分配与结算规则见 [Agent 平台化](./platform.md) §4）；到达 80% 告警，100% 降级（缩短回答、关闭某个 tool）并**暂停转人工**，而不是直接 kill。
 
 > **Cost 是 observability 的一个截面**。把它和 latency、error rate、tool call count 放同一张 dashboard 上看——单一指标骗人，组合指标才反映真实。
 
@@ -210,6 +210,7 @@ GROUP BY agent.name ORDER BY total_cost DESC LIMIT 10;
 - **落库的 4 个不变式**：(1) 每一步 LLM 调用都有 span；(2) span 必含 `trace_id` + `parent_span_id`；(3) cost 算好再落库；(4) 失败事件带 `recoverable` + `error_type`。
 - **采样策略**：线上全量落 span 会爆存储——按 (user_id hash, error) 采样；100% 保留**失败和边界 case**，正常 case 按 1%–10% 采样。
 - **prompt 版本化**：每个 span 带 `prompt_version`（git SHA 或版本号）；CI 上把"prompt 改了"和"eval 跑了"绑在一起。
+- **thinking history 不是"想记就能记"**：reasoning / thinking 内容能否拿到**取决于厂商 API**（有的只回摘要或签名块、有的完全不回），先确认可得性再谈落盘。能拿到时单独加密存储 + 独立访问控制——它是泄露面最大的一类字段（可能含系统提示与私有数据），对外只暴露摘要与"决策点"标签，不暴露原文。
 - **可视化是观测的下半场**：dashboard 要能按 trace_id 看到完整树（哪步、什么 agent、什么 prompt 段、花了多少钱）；业界参考 Langfuse / Phoenix 的 UI。
 
 ## 相关链接
@@ -219,5 +220,7 @@ GROUP BY agent.name ORDER BY total_cost DESC LIMIT 10;
 - [控制循环](./control_loop.md)：每步调用的日志落点
 - [韧性](./resilience.md)：失败事件的日志格式与重试 / Replan 分类
 - [状态管理与 Checkpoint](./state.md)：trace 与 checkpoint 的关系；resume 时如何拼回 trace 链
+- [Agent 平台化](./platform.md)：预算树的分配与结算（本篇只讲计量与归因）
+- [版本化与灰度](./rollout.md)：把 trace 当行为 diff 的原料，做发布前后的过程对比
 - [上下文工程](../context_engineering.md)：长上下文的成本与缓存——cost 维度的上游
 - [工具使用](../tools.md)：tool 调用如何在 trace 里落地

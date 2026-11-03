@@ -233,7 +233,7 @@ bi-encoder（embedding）把 query 和 doc 压成单向量丢失大量细节；c
 - **同一文档反复召回**：top-k 里 5 个片段都来自同一节，看似 recall 高其实信息冗余——靠 MMR 或文档级去重。
 - **stale index**：文档更新了索引没更，模型回答 2 年前的版本；必须有 reindex pipeline + 版本号。
 - **过度依赖 LLM-as-judge**：judge 偏置严重；至少抽 10% 人工校准。
-- **prompt injection 通过检索片段进入**：网页 / 用户文档夹"忽略所有规则"指令会被当成系统指令——必须显式隔离（见 `prompt_engineering.md`）。
+- **检索投毒（retrieval poisoning）比注入更麻烦**：注入是"这一次材料带了指令"；投毒是"语料本身被污染"——一条恶意文档进了索引，**之后每次召回都在加强它**，并会固化进回答、缓存和记忆。对策：源信誉 / 签名、跨源交叉验证、引用隔离、低信任内容不进高权限 agent 的上下文，并把"污染率"做成检索层指标。六层防御的分工见 [提示工程](prompt_engineering.md) §8。
 - **retrieval bias**：embedding 训练分布会带偏（如对英文 query 召回更准）；多语种场景要专门测。
 - **太多层包不住根因**：HyDE + multi-query + rerank + self-RAG 全开后一次失败你不知道是哪层的事——上线前每加一层都要单独 A/B 验证。
 

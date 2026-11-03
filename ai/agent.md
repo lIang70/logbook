@@ -4,7 +4,7 @@
 
 - **Agent 是系统形态，不是模型能力**：在环境里闭环运行、动作会改变后续输入的决策系统；"会回答"不等于"会行动"。
 - 一个可落地的 agent 由感知 / 状态 / 记忆 / 规划 / 执行 / 评估六块组成，缺一块会直接压低上限——其中"执行"必须是可验证的工具调用，"评估"必须是程序能判的守门条件。
-- 控制循环（Observe → Think → Act → Check → Repeat）本身不含智能；智能在模型里，循环只是把决策分发、执行、回灌。
+- 控制循环（Observe → Think → Act → Check → Repeat）本身不含智能——**上限在模型，方差和成本在 harness**：同一个模型换一套工具 schema / 上下文策略 / 终止与重试规则，完成率和 token 成本能差几倍；循环只是把决策分发、执行、回灌。
 - 多模态落地最先崩在三处：模态对齐（看见的和能操作的不是一回事）、可验证性（图里看出来的东西程序校验不了）、成本延迟（多模态链路更慢更贵）。
 - 失败模式比能力更值得背：循环、幻觉、工具误用、状态漂移、目标漂移——见「常见失败模式」。
 
@@ -24,6 +24,25 @@
 **Agent = 在环境中闭环运行的决策系统**：接收观测（文本/图像/结构化状态/传感器）并产生动作（工具调用/点击/写文件/移动/发消息），以最大化某个目标（完成任务、奖励、约束满足）。
 
 > 概念搞清后，"怎么跑起来" 看 [harness/](harness/)（控制循环的运行时、sandbox、I/O 边界等）。
+
+## 模型 vs Harness：上限与方差的分工
+
+> 一句话：**模型决定"能想到什么"，harness 决定"想到的能不能变成可运营的系统"。**
+
+这两句话经常被读成互相否定，其实正交：
+
+- "智能在模型里"——harness 造不出模型没有的能力，只能减少损耗。模型不会用某个工具，工具 schema 写得再好也只是让它失败得更快。
+- "harness 决定效果和成本"——同一模型在**工具 schema 描述、上下文裁剪、检索时机、stop rule、重试与验证**上换一套实现，完成率与成本会出现量级差异。这是 **harness 作为"外置推理控制"** 的价值：它放大或约束模型的推理能力。
+
+| 维度 | 模型负责（上限） | harness 负责（方差 / 成本） |
+| :--- | :--- | :--- |
+| 决策质量 | 推理、规划、工具选择倾向 | 把"选择"变成结构化调用并校验参数 |
+| 上下文 | 窗口大小、注意力行为 | 裁剪、压缩、缓存排序、来源标记 |
+| 稳定性 | 抗噪、拒答倾向 | stop rule、循环检测、重试与降级、checkpoint |
+| 事实性 | 参数内知识 | 检索时机、引用贯穿、上下文污染隔离 |
+| 成本 | 单价 | 预算路由、前缀缓存命中、模型分档 |
+
+**工程含义**：模型升级和 harness 改动要**分开度量**——混在一起灰度，出了差异归因不了（见 [版本化与灰度](harness/rollout.md)）。评测时也要固定另一边：换 harness 评模型、换模型评 harness，否则分数不可比。
 
 ## 典型系统架构（从工程角度看）
 
@@ -149,16 +168,18 @@ Agent 框架做的事，是把语言模型的生成能力放进一个可观测�
 
 ## 相关链接
 
-- [multi_agent.md](multi_agent.md) — 多 agent 编排（单 agent 撑不下时的拆法）
-- [harness/](harness/) — 运行时层（本文件是"概念"，harness 是"怎么跑"）
-  - [harness/control_loop.md](harness/control_loop.md) — Observe/Think/Act/Check 闭环
-  - [harness/sandbox.md](harness/sandbox.md) — 权限/资源隔离的执行环境
-  - [harness/resilience.md](harness/resilience.md) — 循环检测、超时、重试
-  - [harness/state.md](harness/state.md) — 世界状态/任务清单的持久化
-  - [harness/observability.md](harness/observability.md) — 日志/轨迹/成本/调用链
-  - [harness/io.md](harness/io.md) — 与用户/外部系统的 I/O 边界（含 HITL）
-  - [harness/lifecycle.md](harness/lifecycle.md) — 启动/暂停/恢复/终止
-- [tools.md](tools.md) — tool 协议（MCP / function calling）
-- [prompt_engineering.md](prompt_engineering.md) — 提示工程模式
-- [evals.md](evals.md) — 评测体系
-- [context_engineering.md](context_engineering.md) — 上下文内容取舍
+- [多 Agent 编排](multi_agent.md)：单 agent 撑不下时的拆法
+- [harness/](harness/)：运行时层（本文件是"概念"，harness 是"怎么跑"）
+  - [控制循环](harness/control_loop.md)：Observe/Think/Act/Check 闭环
+  - [沙箱与权限执行](harness/sandbox.md)：权限与资源隔离的执行环境
+  - [韧性](harness/resilience.md)：循环检测、超时、重试
+  - [状态管理与 Checkpoint](harness/state.md)：世界状态与任务清单的持久化
+  - [可观测性](harness/observability.md)：日志、轨迹、成本、调用链
+  - [Harness I/O：流式 / 中断 / HITL / 通道](harness/io.md)：与用户/外部系统的 I/O 边界（含 HITL）
+  - [Agent 生命周期与 Harness 承载](harness/lifecycle.md)：启动、暂停、恢复、终止
+  - [Agent 平台化](harness/platform.md)：租户、配额与预算树、审计、执行引擎边界
+  - [版本化与灰度](harness/rollout.md)：manifest、影子、canary、回滚
+- [工具使用](tools.md)：tool 协议（MCP / function calling）
+- [提示工程](prompt_engineering.md)：提示工程模式
+- [评测](evals.md)：评测体系
+- [上下文工程](context_engineering.md)：上下文内容取舍
