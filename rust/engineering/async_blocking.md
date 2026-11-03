@@ -58,11 +58,11 @@ disallowed-methods = [
 
 扫描方式比人眼靠谱：`grep -rl "async fn"` 再对每个文件数 `std::fs::|ToSocketAddrs|thread::sleep`，然后**逐个看调用上下文**。三类结果：
 
-| 位置 | 判定 |
-| :--- | :--- |
-| `async_trait` 实现里、`tokio::spawn` 的 future 里、`.await` 链上 | 真缺陷，要搬 |
-| 同步构造（`new` / `from_*` / `BuildCtx`） | 允许，但要在注释里写明"这是构造期" |
-| 已经在 `spawn_blocking` 闭包里 | 允许，而且**不要**再嵌套一层 |
+| 位置                                                             | 判定                               |
+| :--------------------------------------------------------------- | :--------------------------------- |
+| `async_trait` 实现里、`tokio::spawn` 的 future 里、`.await` 链上 | 真缺陷，要搬                       |
+| 同步构造（`new` / `from_*` / `BuildCtx`）                        | 允许，但要在注释里写明"这是构造期" |
+| 已经在 `spawn_blocking` 闭包里                                   | 允许，而且**不要**再嵌套一层       |
 
 ## 4. 不做的事
 

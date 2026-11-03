@@ -47,19 +47,19 @@ Go 的内存管理采用层级结构：
 Go 根据对象大小采用不同的分配策略：
 
 1. **微对象 (Tiny Object) < 16B**:
-    - 使用专门的 `tiny` 分配器。
-    - 多个微对象会被合并到一个 16B 的内存块中，减少碎片。
-    - tiny 分配器**只**接受 noscan 且 < 16B 的对象（也接受小于 16B 的 string），合并进同一个 16B 块。
+   - 使用专门的 `tiny` 分配器。
+   - 多个微对象会被合并到一个 16B 的内存块中，减少碎片。
+   - tiny 分配器**只**接受 noscan 且 < 16B 的对象（也接受小于 16B 的 string），合并进同一个 16B 块。
 
 2. **小对象 (Small Object) 16B ~ 32KB**:
-    - 也是最常见的分配场景。
-    - 直接从 P 本地 `mcache` 对应的 Size Class 的 `mspan` 中分配。
-    - **无锁，极快**。
+   - 也是最常见的分配场景。
+   - 直接从 P 本地 `mcache` 对应的 Size Class 的 `mspan` 中分配。
+   - **无锁，极快**。
 
 3. **大对象 (Large Object) > 32KB**:
-    - 跳过 mcache 和 mcentral。
-    - 直接从 `mheap` 申请。
-    - 可能会触发 GC。
+   - 跳过 mcache 和 mcentral。
+   - 直接从 `mheap` 申请。
+   - 可能会触发 GC。
 
 ## 内存分配流程总结
 

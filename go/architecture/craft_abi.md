@@ -13,11 +13,11 @@
 
 ## 1. 三个接口，三个 owner
 
-| 接口 | owner | 自由度 |
-| :--- | :--- | :--- |
-| Lifecycle（`Describe` / `Start` / `Run` / `Steer` / `Renew` / `Cancel` / `Close`） | 平台 | craft 必须精确实现，版本不匹配直接拒 |
-| Capabilities（workspace / sandbox / secret / tool source…） | 平台 | craft 只能凭 grant **消费**，不能 claim |
-| 业务 payload（`Run` 的输入与事件流） | craft | 有类型的 `message` / `delta`，或声明的私有扩展 |
+| 接口                                                                               | owner | 自由度                                         |
+| :--------------------------------------------------------------------------------- | :---- | :--------------------------------------------- |
+| Lifecycle（`Describe` / `Start` / `Run` / `Steer` / `Renew` / `Cancel` / `Close`） | 平台  | craft 必须精确实现，版本不匹配直接拒           |
+| Capabilities（workspace / sandbox / secret / tool source…）                        | 平台  | craft 只能凭 grant **消费**，不能 claim        |
+| 业务 payload（`Run` 的输入与事件流）                                               | craft | 有类型的 `message` / `delta`，或声明的私有扩展 |
 
 几处值得抄的细节：
 
@@ -43,11 +43,11 @@
 
 三步都要能"停在半路再继续"，否则进程被杀一次就留下半装状态：
 
-| 动作 | 步骤 | 失败后要能 |
-| :--- | :--- | :--- |
-| **install** | 校验 manifest → 上限检查 → 解包到**版本目录** → 铸 token → 起进程 → `Describe` → 进 registry | 删版本目录、不污染 registry |
-| **update in place** | 快照旧版本 → 换目录 → 重启子进程 → `Describe` 校验 → 失败则回滚快照 | 回到旧版本且**旧进程能重新起来** |
-| **uninstall** | 停进程 → 吊销 token → 删目录 → **带走插件自己的数据** → 带锁可续跑 | 重复执行不报错（幂等） |
+| 动作                | 步骤                                                                                         | 失败后要能                       |
+| :------------------ | :------------------------------------------------------------------------------------------- | :------------------------------- |
+| **install**         | 校验 manifest → 上限检查 → 解包到**版本目录** → 铸 token → 起进程 → `Describe` → 进 registry | 删版本目录、不污染 registry      |
+| **update in place** | 快照旧版本 → 换目录 → 重启子进程 → `Describe` 校验 → 失败则回滚快照                          | 回到旧版本且**旧进程能重新起来** |
+| **uninstall**       | 停进程 → 吊销 token → 删目录 → **带走插件自己的数据** → 带锁可续跑                           | 重复执行不报错（幂等）           |
 
 **版本目录而不是原地覆盖**，是为了让"回滚"变成一次指针切换，而不是"把文件再拷回去"——后者在进程还持有旧二进制时会失败。
 

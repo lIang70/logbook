@@ -328,16 +328,16 @@ flowcraft 把这件事讲得很清楚：BM25、vector、entity 三路并行 → 
 
 > section 10 的 feature 对比是"低层实现"维度（怎么抽、怎么存、怎么查），这里是"高层判断"维度（什么时候用、代价是什么）。两者互补——feature 表是 pros/cons 表的事实基础。
 
-| 方案               | 优势                                                                                       | 代价 / 弱项                                                 |
-| :----------------- | :----------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
-| **mem0**           | 最简单（LLM 抽 + 向量 + ADD-only）；LoCoMo 上 +26% / -91% p95 / -90% cost；可追溯          | 无 update → 同主题几十条历史 facts 存储膨胀；检索过滤复杂   |
-| **Letta (MemGPT)** | 模型"看得到"自己记忆（in-context block）；agent 范式自然；**可控可即时修**                 | 每次写都要 LLM call，cost 高；block 容量上限；写错无硬契约  |
-| **LangMem**        | LangGraph 原生；fact/profile/procedural 多类型一等公民；hot-path + 后台 consolidation      | 强绑 LangGraph 生态；typed memory 的 schema 设计是负担      |
-| **Cognee**         | 同步 `add` + `cognify` + `improve` pipeline 完整；多源数据接入                             | 同步管线阻塞主流程；Neo4j/Kuzu 运维成本高；偏批量文档       |
-| **Zep / Graphiti** | **时间推理一流**（`valid_from/valid_to`）；hybrid 检索；企业级 retention + legal hold      | 多 DB 支持 = 选型负担；时序图查询要走时间过滤；企业版价格高 |
-| **A-MEM**          | 无 schema 自组织（Zettelkasten 风格）；links 自由；知识网络自演化                          | 写时改写历史 = 写入开销大 + 行为不可预测；纯研究型          |
-| **flowcraft**      | 三路（BM25+vector+entity）+ RRF + 时间衰减 + 实体加权；vendor 中性；可选 LLM 精排 | 不带图谱；多层结构没作为一等公民暴露                        |
-| **trpc-agent-go**  | Go 生态；Redis 默认（已有 Redis 栈零迁移）；CRUD 工具调用简单                              | 检索能力基础（关键词/工具调用），无 hybrid；偏 session      |
+| 方案               | 优势                                                                                  | 代价 / 弱项                                                 |
+| :----------------- | :------------------------------------------------------------------------------------ | :---------------------------------------------------------- |
+| **mem0**           | 最简单（LLM 抽 + 向量 + ADD-only）；LoCoMo 上 +26% / -91% p95 / -90% cost；可追溯     | 无 update → 同主题几十条历史 facts 存储膨胀；检索过滤复杂   |
+| **Letta (MemGPT)** | 模型"看得到"自己记忆（in-context block）；agent 范式自然；**可控可即时修**            | 每次写都要 LLM call，cost 高；block 容量上限；写错无硬契约  |
+| **LangMem**        | LangGraph 原生；fact/profile/procedural 多类型一等公民；hot-path + 后台 consolidation | 强绑 LangGraph 生态；typed memory 的 schema 设计是负担      |
+| **Cognee**         | 同步 `add` + `cognify` + `improve` pipeline 完整；多源数据接入                        | 同步管线阻塞主流程；Neo4j/Kuzu 运维成本高；偏批量文档       |
+| **Zep / Graphiti** | **时间推理一流**（`valid_from/valid_to`）；hybrid 检索；企业级 retention + legal hold | 多 DB 支持 = 选型负担；时序图查询要走时间过滤；企业版价格高 |
+| **A-MEM**          | 无 schema 自组织（Zettelkasten 风格）；links 自由；知识网络自演化                     | 写时改写历史 = 写入开销大 + 行为不可预测；纯研究型          |
+| **flowcraft**      | 三路（BM25+vector+entity）+ RRF + 时间衰减 + 实体加权；vendor 中性；可选 LLM 精排     | 不带图谱；多层结构没作为一等公民暴露                        |
+| **trpc-agent-go**  | Go 生态；Redis 默认（已有 Redis 栈零迁移）；CRUD 工具调用简单                         | 检索能力基础（关键词/工具调用），无 hybrid；偏 session      |
 
 ### 10.2 横向 cross-cutting 维度
 

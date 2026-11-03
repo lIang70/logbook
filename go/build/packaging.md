@@ -13,10 +13,10 @@
 
 ## 1. 两个入口，各管一段
 
-| 入口 | 管什么 | 例子 |
-| :--- | :--- | :--- |
-| `Makefile` | 跨语言门禁与常用动作，**不随平台变** | `fmt` / `lint` / `vet` / `test` / `check-boundaries` / `tidy` / `rust-test` / `rust-clippy` |
-| `Taskfile`（或 `scripts/*.sh`） | 平台打包、产物命名、签名 | `build` / `package` / `run` / `dev`，按 OS 拆文件 |
+| 入口                            | 管什么                               | 例子                                                                                        |
+| :------------------------------ | :----------------------------------- | :------------------------------------------------------------------------------------------ |
+| `Makefile`                      | 跨语言门禁与常用动作，**不随平台变** | `fmt` / `lint` / `vet` / `test` / `check-boundaries` / `tidy` / `rust-test` / `rust-clippy` |
+| `Taskfile`（或 `scripts/*.sh`） | 平台打包、产物命名、签名             | `build` / `package` / `run` / `dev`，按 OS 拆文件                                           |
 
 > 反模式：把"打包 macOS dmg"塞进 Makefile 的 `all`。门禁要能在任何机器上秒级跑完；打包只在对应 OS 上跑。
 

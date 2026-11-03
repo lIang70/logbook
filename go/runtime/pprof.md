@@ -57,12 +57,12 @@ heap-<t1>.pb.gz   又切换了 5 次工作区 / 重建了 5 次 runtime
 
 ## 5. 其它 profile
 
-| profile | 什么时候用 | 注意 |
-| :--- | :--- | :--- |
-| `goroutine` | 怀疑泄漏 / 卡死 | 先看 `debug=2` 的栈，再拿 `pprof` 聚合 |
-| `block` / `mutex` | 锁竞争（低 CPU 高延迟） | 采样率默认关闭：block 用 `runtime.SetBlockProfileRate`，mutex 用 `SetMutexProfileFraction` |
-| `runtime/metrics` | 长期趋势（GC 周期、堆目标） | 比 profile 便宜，可常开 |
-| CPU | 只有"CPU 打满"时才值得 | 大量 I/O 等待的路径上它什么都不显示 |
+| profile           | 什么时候用                  | 注意                                                                                       |
+| :---------------- | :-------------------------- | :----------------------------------------------------------------------------------------- |
+| `goroutine`       | 怀疑泄漏 / 卡死             | 先看 `debug=2` 的栈，再拿 `pprof` 聚合                                                     |
+| `block` / `mutex` | 锁竞争（低 CPU 高延迟）     | 采样率默认关闭：block 用 `runtime.SetBlockProfileRate`，mutex 用 `SetMutexProfileFraction` |
+| `runtime/metrics` | 长期趋势（GC 周期、堆目标） | 比 profile 便宜，可常开                                                                    |
+| CPU               | 只有"CPU 打满"时才值得      | 大量 I/O 等待的路径上它什么都不显示                                                        |
 
 ## 6. 常见误读
 

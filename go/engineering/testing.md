@@ -13,12 +13,12 @@
 
 ## 1. 四层，别混
 
-| 层 | 目的 | 形态 |
-| :--- | :--- | :--- |
-| 单元 | 一个函数一个决定 | table-driven，输入/输出/错误三类断言 |
-| 集成 | 一个 capability 走通（含真实 SQLite / 真实子进程） | 用临时目录 + `t.Cleanup` |
-| 契约 | 多实现共享同一套行为 | 一个 `contract_test.go`，每个实现都跑一遍 |
-| 端到端 | 一条真实用户路径 | 少而稳，跑在干净环境 |
+| 层     | 目的                                               | 形态                                      |
+| :----- | :------------------------------------------------- | :---------------------------------------- |
+| 单元   | 一个函数一个决定                                   | table-driven，输入/输出/错误三类断言      |
+| 集成   | 一个 capability 走通（含真实 SQLite / 真实子进程） | 用临时目录 + `t.Cleanup`                  |
+| 契约   | 多实现共享同一套行为                               | 一个 `contract_test.go`，每个实现都跑一遍 |
+| 端到端 | 一条真实用户路径                                   | 少而稳，跑在干净环境                      |
 
 契约测试是这套里最容易被忽略的：**同一份 deploy 文档有多种后端实现时，行为必须由契约测试保证，而不是由每个实现各自的测试"碰巧一致"**。
 
@@ -63,14 +63,14 @@ test-core-windows    test-craft-windows
 
 实际长成的样子（都真实存在，改名或删掉就会红）：
 
-| 测试 | 钉住的性态 |
-| :--- | :--- |
-| `TestIndexStaysFlat` | 搜索索引不得退回"每词一个 map" |
-| `TestRebuiltHostIsCollectable` | 重建后旧 host 不可达（weak pointer） |
-| `TestClosedRuntimeIsCollectable` | 关闭后的 runtime 可回收 |
-| `TestScanLinesAllocatesNothing` / `TestScanLinesMatchesSplitSemantics` | 扫行零分配，且与 `split` 语义一致 |
-| `handoff_test.go` / `assembly_test.go` | 消息 take-once、前缀缓存不读旧数据 |
-| 裁剪后恢复路径 | 对裁剪过的板再跑一次恢复，得到的消息集不变（不动点） |
+| 测试                                                                   | 钉住的性态                                           |
+| :--------------------------------------------------------------------- | :--------------------------------------------------- |
+| `TestIndexStaysFlat`                                                   | 搜索索引不得退回"每词一个 map"                       |
+| `TestRebuiltHostIsCollectable`                                         | 重建后旧 host 不可达（weak pointer）                 |
+| `TestClosedRuntimeIsCollectable`                                       | 关闭后的 runtime 可回收                              |
+| `TestScanLinesAllocatesNothing` / `TestScanLinesMatchesSplitSemantics` | 扫行零分配，且与 `split` 语义一致                    |
+| `handoff_test.go` / `assembly_test.go`                                 | 消息 take-once、前缀缓存不读旧数据                   |
+| 裁剪后恢复路径                                                         | 对裁剪过的板再跑一次恢复，得到的消息集不变（不动点） |
 
 ## 6. 反模式
 

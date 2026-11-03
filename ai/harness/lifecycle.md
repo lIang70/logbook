@@ -154,13 +154,13 @@ SIGTERM 到达
 
 ## 7. 资源回收:临时文件 / 子进程 / 网络连接 / 文件锁
 
-| 资源         | 常见泄漏                     | 正确做法                                                       |
-| :----------- | :--------------------------- | :------------------------------------------------------------- |
-| **临时文件** | `/tmp` 越攒越多、磁盘满      | `TempDir` + `defer RemoveAll`,或 `mkstemp` 走 `Close+Unlink`   |
-| **子进程**   | 父退 child 还在跑(zombie)    | 父必须 `Wait()`;**进程组** + `Setpgid: true` 防止 fork 炸弹    |
-| **网络连接** | `keep-alive` 池未关、池污染  | `http.Server.Shutdown(ctx)` 优雅关;idle pool 设上限            |
-| **文件锁**   | lockfile 残留、NFS 锁语义不同 | 进程退出内核会释放 `flock`/OFD 锁;坑在残留文件与 NFS |
-| **GPU 显存** | 多 session 共用一模型,显存爆 | 按 session 隔离 `CUDA_VISIBLE_DEVICES`;用 vLLM / TGI 池化      |
+| 资源         | 常见泄漏                      | 正确做法                                                     |
+| :----------- | :---------------------------- | :----------------------------------------------------------- |
+| **临时文件** | `/tmp` 越攒越多、磁盘满       | `TempDir` + `defer RemoveAll`,或 `mkstemp` 走 `Close+Unlink` |
+| **子进程**   | 父退 child 还在跑(zombie)     | 父必须 `Wait()`;**进程组** + `Setpgid: true` 防止 fork 炸弹  |
+| **网络连接** | `keep-alive` 池未关、池污染   | `http.Server.Shutdown(ctx)` 优雅关;idle pool 设上限          |
+| **文件锁**   | lockfile 残留、NFS 锁语义不同 | 进程退出内核会释放 `flock`/OFD 锁;坑在残留文件与 NFS         |
+| **GPU 显存** | 多 session 共用一模型,显存爆  | 按 session 隔离 `CUDA_VISIBLE_DEVICES`;用 vLLM / TGI 池化    |
 
 > **子进程泄漏是 harness 第一杀手**。Go 的 `os/exec` 默认不 `Setpgid`——父崩了子进程会被 init 接管,继续跑、继续占文件、继续扣费。**生产环境的子 agent 必须进程组化 + 双 signal + Wait 回收**。
 

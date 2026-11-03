@@ -15,17 +15,17 @@
 
 每一节的数字都不是"感觉"，来源和取数方式如下——**看数字之前先看它是哪种账**：
 
-| 节 | 指标 | 当时的取数方式 |
-| :--- | :--- | :--- |
-| §0 基线 | 前端各相耗时 | Playwright spec + 每 phase 一个 probe，三跑取中位数 |
-| §1 分配账 | 单次分配 / 耗时 | 基准（`-benchmem`）+ 种子语料逐 case 对齐 |
-| §2 边界账 | 进程族 RSS | 打包 App + WebKit Malloc gauge（Go 堆里看不到） |
-| §3 序列化账 | 字节 / 分配 / 耗时 | 生产 workspace 的 checkpoint 文件 + 基准 |
-| §4 复制账 | 五分钟累计分配 | `alloc_space` heap profile（live 54 MB / alloc 6.78 GB） |
-| §5 缓存账 | 单轮解码量 | `alloc_space` + `-focus message.decodeStrict`（1527 MB） |
-| §6 索引账 | 内存 / 对象数 | `inuse_space` **成对拍**（间隔 5 分钟、跨 5 次重建） |
-| §7 调度账 | 装配次数与耗时 | workspace 日志 + 装配 reason（不是 profile） |
-| §8 UI 账 | 帧耗时 / DOM 行数 | RUM + Playwright baseline |
+| 节          | 指标               | 当时的取数方式                                           |
+| :---------- | :----------------- | :------------------------------------------------------- |
+| §0 基线     | 前端各相耗时       | Playwright spec + 每 phase 一个 probe，三跑取中位数      |
+| §1 分配账   | 单次分配 / 耗时    | 基准（`-benchmem`）+ 种子语料逐 case 对齐                |
+| §2 边界账   | 进程族 RSS         | 打包 App + WebKit Malloc gauge（Go 堆里看不到）          |
+| §3 序列化账 | 字节 / 分配 / 耗时 | 生产 workspace 的 checkpoint 文件 + 基准                 |
+| §4 复制账   | 五分钟累计分配     | `alloc_space` heap profile（live 54 MB / alloc 6.78 GB） |
+| §5 缓存账   | 单轮解码量         | `alloc_space` + `-focus message.decodeStrict`（1527 MB） |
+| §6 索引账   | 内存 / 对象数      | `inuse_space` **成对拍**（间隔 5 分钟、跨 5 次重建）     |
+| §7 调度账   | 装配次数与耗时     | workspace 日志 + 装配 reason（不是 profile）             |
+| §8 UI 账    | 帧耗时 / DOM 行数  | RUM + Playwright baseline                                |
 
 > 取数方法本身写在 [pprof 与性能读法](../runtime/pprof.md)：`alloc_space` 看反复分配，`inuse_space` 看泄漏，成对拍看"只涨不落"的那一项。
 
@@ -33,13 +33,13 @@
 
 脚本化四类交互，每个 phase 一个 probe 报告，`--compare` 打印两侧与 run-to-run 波动。主分支上的中位数：
 
-| 场景 | 数字 | 说明 |
-| :--- | :--- | :--- |
-| 长回答流式时的 flush commit | p95 **9.2ms** | flush 本身 0.6ms，钱在 commit |
-| 4000 行 `write_file` 提交 | **19.1ms** | 超过一帧 |
-| workspace 切换 | **26.5ms**（frame_max 25ms） | 最贵的单次交互 |
-| 启动 hydration | 一帧 > 50ms | 只有一帧超标 |
-| DOM 行数 / 挂载行 | ~300 / ≤11 | 虚拟化已生效，剩余空间不在"少挂行" |
+| 场景                        | 数字                         | 说明                               |
+| :-------------------------- | :--------------------------- | :--------------------------------- |
+| 长回答流式时的 flush commit | p95 **9.2ms**                | flush 本身 0.6ms，钱在 commit      |
+| 4000 行 `write_file` 提交   | **19.1ms**                   | 超过一帧                           |
+| workspace 切换              | **26.5ms**（frame_max 25ms） | 最贵的单次交互                     |
+| 启动 hydration              | 一帧 > 50ms                  | 只有一帧超标                       |
+| DOM 行数 / 挂载行           | ~300 / ≤11                   | 虚拟化已生效，剩余空间不在"少挂行" |
 
 结论直接决定了后续方向：**剩下的收益在 commit 成本与大 payload，不在减少 DOM 行**。没有这一步，后面十几轮都会优化错地方。
 
@@ -49,10 +49,10 @@
 
 `EstimateTokens` 定义在"消息的渲染形态"上，于是每次 sizing 都要先把每条消息 join 成字符串，再 `utf16.Encode([]rune(text))`。
 
-| | 分配 | 耗时 |
-| :--- | :--- | :--- |
-| 渲染后计数（1200 条 / ~3MB 频道） | 13.4 MB / 次 | ~8 ms |
-| 按 parts 计数 | ~50 KB / 次 | ~1.3 ms |
+|                                   | 分配         | 耗时    |
+| :-------------------------------- | :----------- | :------ |
+| 渲染后计数（1200 条 / ~3MB 频道） | 13.4 MB / 次 | ~8 ms   |
+| 按 parts 计数                     | ~50 KB / 次  | ~1.3 ms |
 
 关键不是快 6 倍，而是**规则仍然只有一份**：text 与 tool result 直接从内容里数，其它形状回落 `RenderMessage`。一致性用种子语料钉住——pointer parts、文本旁的 tool activity、媒体、CJK、astral、非法 UTF-8、不是 JSON 的参数，逐 case 与渲染器对齐。
 
@@ -75,21 +75,21 @@
 
 裁剪挂在已经属于 host 的 checkpoint store 上，产出"MainChannel = 本轮消息 + 两个计数置 0"。切片规则没有第二份：复用 `ExtractTurnMessages` 的同一函数，恢复路径对裁剪后的板再跑一次得到同一份消息——**不动点**，用测试钉住。`sessions.resume: true` 时不裁剪（resume 要用整块板给下一轮播种）。
 
-| | 序列化 | 分配 | 耗时 |
-| :--- | :--- | :--- | :--- |
-| 整块 board | 37.80 MB | +54.7 MB | 352 ms |
-| 裁剪后 | **0.17 MB** | **+1.0 MB** | **2.3 ms** |
+|            | 序列化      | 分配        | 耗时       |
+| :--------- | :---------- | :---------- | :--------- |
+| 整块 board | 37.80 MB    | +54.7 MB    | 352 ms     |
+| 裁剪后     | **0.17 MB** | **+1.0 MB** | **2.3 ms** |
 
 ## 4. 复制账：全量历史 replay 的三次重复
 
 一个 42 MB 会话（14,041 条归档消息）、一轮对话、五分钟内 **6.78 GB** 分配（live 只有 54 MB）。开销全在"同一份 transcript 被处理三遍"：
 
-| 环节 | 分配 | 原因 |
-| :--- | :--- | :--- |
-| `RenderTurn` 塞进 board var | 155 MB | 把消息序列化成 JSON 放进变量 |
-| `Merge` 从变量里解回来 | ~690 MB | 同一个 var 反序列化 |
-| `replayContext` 逐行解码 | 731 MB | 每轮都从存储解一遍 |
-| `Turns` 物化分页 | 605 MB | 同一个会话被多处同时打开 |
+| 环节                        | 分配    | 原因                         |
+| :-------------------------- | :------ | :--------------------------- |
+| `RenderTurn` 塞进 board var | 155 MB  | 把消息序列化成 JSON 放进变量 |
+| `Merge` 从变量里解回来      | ~690 MB | 同一个 var 反序列化          |
+| `replayContext` 逐行解码    | 731 MB  | 每轮都从存储解一遍           |
+| `Turns` 物化分页            | 605 MB  | 同一个会话被多处同时打开     |
 
 对应四招：
 
@@ -119,9 +119,9 @@
 
 skills 搜索索引原来是 `map[term]map[doc]tf`（每个词一个 Go map），且桌面 `Runtime` 用一个 `map[*host.Host]marker` 记"已配置"，**从不删除条目**——每次切工作区、保存设置、装插件都把整个退役 runtime（含搜索索引、MCP schema、事件总线）钉住不放。
 
-| | 内存 | 对象数 | 排名 |
-| :--- | :--- | :--- | :--- |
-| `map[term]map[doc]tf` | 0.93 MB | 9,755 | 基线 |
+|                         | 内存        | 对象数    | 排名                              |
+| :---------------------- | :---------- | :-------- | :-------------------------------- |
+| `map[term]map[doc]tf`   | 0.93 MB     | 9,755     | 基线                              |
 | 按词排序的扁平 postings | **0.41 MB** | **2,859** | 一致（31 个查询，最大分差 7e-15） |
 
 两条测试钉住它：`TestIndexStaysFlat`（结构回退就红）、`TestRebuiltHostIsCollectable`（用 weak pointer 断言"旧 host 在重建后不可达"）。同一个 profile 还顺手修了 `grep`：先按 `stat` 退休超大文件，不再读 1 MiB 再丢弃；不再把每个文件复制成 string 再切成行（`TestGrepSkipsBinaryAndOversizedBeforeReading`、`TestScanLinesAllocatesNothing`）。

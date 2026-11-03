@@ -111,19 +111,19 @@ Linux CFS 内部细节看 [Process](process.md) 的 8.2 节；Go GMP 内部细�
 
 > 这一节是“轴”——把不同调度器按同一组维度摆出来，方便按需取用。
 
-| 维度          | Linux CFS                                     | Windows UMS           | FreeBSD ULE           | Go GMP                          | tokio multi-thread      |
-| :------------ | :-------------------------------------------- | :-------------------- | :-------------------- | :------------------------------ | :---------------------- |
-| 调度对象      | 内核 task                                     | UMS fiber             | 内核 thread           | goroutine                       | async task              |
-| 调度位置      | 内核态                                        | 用户态 (调度权在 app) | 内核态                | 用户态 (runtime)                | 用户态 (runtime)        |
-| 调度模型      | 抢占                                          | 协作 (fiber 层)       | 抢占                  | 抢占 (1.14+ 信号)               | 协作 (`.await` 让出)    |
-| 优先级/权重   | nice + 权重表                                 | 无 (应用自定义)       | `pri` + 交互性加成    | 无全局优先级 (优先级队列在内部) | 无 (调度器视角)         |
+| 维度          | Linux CFS                                     | Windows UMS           | FreeBSD ULE           | Go GMP                          | tokio multi-thread             |
+| :------------ | :-------------------------------------------- | :-------------------- | :-------------------- | :------------------------------ | :----------------------------- |
+| 调度对象      | 内核 task                                     | UMS fiber             | 内核 thread           | goroutine                       | async task                     |
+| 调度位置      | 内核态                                        | 用户态 (调度权在 app) | 内核态                | 用户态 (runtime)                | 用户态 (runtime)               |
+| 调度模型      | 抢占                                          | 协作 (fiber 层)       | 抢占                  | 抢占 (1.14+ 信号)               | 协作 (`.await` 让出)           |
+| 优先级/权重   | nice + 权重表                                 | 无 (应用自定义)       | `pri` + 交互性加成    | 无全局优先级 (优先级队列在内部) | 无 (调度器视角)                |
 | 公平性        | CFS 名称由来：完全公平                        | 由应用决定            | 偏向交互 + cache 局部 | 抢占 + work stealing            | 协作 + work stealing（无抢占） |
-| 组调度 / 配额 | cgroup v1/v2 (CPU、memory、pids)              | 进程/JOB 对象         | jail + cpuset         | 无 (GOMAXPROCS 总数)            | 无                      |
-| 亲和性 / NUMA | 完整支持 (sched_setaffinity / NUMA balancing) | 由 app + 线程池       | 显式 NUMA 感知        | 弱 (需手动控制)                 | 弱 (需手动控制)         |
-| 实时性        | `SCHED_FIFO/RR/DEADLINE` (旁路 CFS)           | 不主打实时            | `RT priority`         | 不主打实时                      | 不主打实时              |
-| 阻塞处理      | 内核态阻塞可睡眠                              | 主动让出 OS 线程      | 内核态阻塞可睡眠      | P 转让给其他 M                  | `spawn_blocking` 线程池 |
-| 切换成本      | 高 (内核态切换)                               | 低 (用户态)           | 高                    | 极低 (用户态)                   | 极低 (用户态)           |
-| 典型量级      | 数千~万级 task                                | 数千~万级 fiber       | 数千~万级 thread      | 数十万~百万级 G                 | 数十万~百万级 task      |
+| 组调度 / 配额 | cgroup v1/v2 (CPU、memory、pids)              | 进程/JOB 对象         | jail + cpuset         | 无 (GOMAXPROCS 总数)            | 无                             |
+| 亲和性 / NUMA | 完整支持 (sched_setaffinity / NUMA balancing) | 由 app + 线程池       | 显式 NUMA 感知        | 弱 (需手动控制)                 | 弱 (需手动控制)                |
+| 实时性        | `SCHED_FIFO/RR/DEADLINE` (旁路 CFS)           | 不主打实时            | `RT priority`         | 不主打实时                      | 不主打实时                     |
+| 阻塞处理      | 内核态阻塞可睡眠                              | 主动让出 OS 线程      | 内核态阻塞可睡眠      | P 转让给其他 M                  | `spawn_blocking` 线程池        |
+| 切换成本      | 高 (内核态切换)                               | 低 (用户态)           | 高                    | 极低 (用户态)                   | 极低 (用户态)                  |
+| 典型量级      | 数千~万级 task                                | 数千~万级 fiber       | 数千~万级 thread      | 数十万~百万级 G                 | 数十万~百万级 task             |
 
 ### 3.1 几个“反直觉”的轴
 

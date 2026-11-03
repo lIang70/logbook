@@ -69,13 +69,13 @@
 
 ### 2.1 选型对比
 
-| 协议 / 平台              | 定位                           | 适用场景                      |
-| :----------------------- | :----------------------------- | :---------------------------- |
-| **OpenTelemetry**        | 通用 trace 协议（行业标准）    | 中大型系统、与现有 APM 共用   |
-| **LangSmith**            | LangChain 生态 LLM-native      | LangChain 系项目、快速验证    |
-| **Langfuse**             | 开源 LLM-native trace + eval   | 自托管 / 不想被 vendor 锁     |
-| **Phoenix (Arize)**      | trace + eval + experiment 平台 | 商业项目、需要 eval 闭环      |
-| **OpenLLMetry**          | OTel 的 LLM 扩展               | 已有 OTel 基建，想加 LLM 语义 |
+| 协议 / 平台         | 定位                           | 适用场景                      |
+| :------------------ | :----------------------------- | :---------------------------- |
+| **OpenTelemetry**   | 通用 trace 协议（行业标准）    | 中大型系统、与现有 APM 共用   |
+| **LangSmith**       | LangChain 生态 LLM-native      | LangChain 系项目、快速验证    |
+| **Langfuse**        | 开源 LLM-native trace + eval   | 自托管 / 不想被 vendor 锁     |
+| **Phoenix (Arize)** | trace + eval + experiment 平台 | 商业项目、需要 eval 闭环      |
+| **OpenLLMetry**     | OTel 的 LLM 扩展               | 已有 OTel 基建，想加 LLM 语义 |
 
 > **选型小抄**：已有 OTel / Datadog / Honeycomb 基建 → OpenTelemetry + OpenLLMetry；纯 LangChain 想快 → LangSmith；想自托管 + 留数据出口 → Langfuse。**避免 vendor lock**——选型时确认"能不能把我的 trace 导出成标准格式"。
 

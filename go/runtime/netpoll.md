@@ -49,11 +49,11 @@ Go 走的是后者：API 像 Java 的 `InputStream.read`，但底层像 epoll �
 
 netpoll 在每个 OS 下有不同的实现（`netpoll_epoll.go` / `netpoll_kqueue.go` / `netpoll_windows.go` 等）：
 
-| 平台          | 机制     | 思路                                                     |
-| :------------ | :------- | :------------------------------------------------------- |
+| 平台          | 机制     | 思路                                                              |
+| :------------ | :------- | :---------------------------------------------------------------- |
 | **Linux**     | `epoll`  | 事件就绪通知（reactor 风格），`EPOLLET` 边缘触发 + 唤醒后重新 arm |
-| **BSD/macOS** | `kqueue` | 通用事件接口，与 epoll 思路接近                          |
-| **Windows**   | IOCP     | **完成端口**：发起 overlapped I/O 后由内核在"完成"时通知 |
+| **BSD/macOS** | `kqueue` | 通用事件接口，与 epoll 思路接近                                   |
+| **Windows**   | IOCP     | **完成端口**：发起 overlapped I/O 后由内核在"完成"时通知          |
 
 > **Windows 与 epoll 的方向差**：epoll 是"FD 状态变化时告诉你"（ready 通知）；IOCP 是"你发起 I/O，做完了内核再叫你"（completion 通知）。Go 在 Windows 下用 `netpoll_windows.go` 把 IOCP 适配成与 epoll 相同的"事件就绪"语义，业务代码完全感知不到。
 

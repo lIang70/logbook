@@ -101,7 +101,7 @@ LLM 一轮的返回里 driver 只关心三件事，按出现顺序处理：
 | `tool_use` / `tool_calls`   | 协议要求必须执行至少一个 tool，否则视作协议违规                 |
 | `length`                    | 截断——是否补一轮（提醒 "continue"）还是直接 `failed` 是策略选择 |
 | `content_filter` / `safety` | 按 `failed` 处理；可能需要 escalate 或人工审核                  |
-| `error`                     | driver 层面重试（见 [韧性](./resilience.md)）      |
+| `error`                     | driver 层面重试（见 [韧性](./resilience.md)）                   |
 
 ## 4. 终止条件：分层防御
 

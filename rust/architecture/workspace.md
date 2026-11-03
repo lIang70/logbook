@@ -66,12 +66,12 @@ caps::*      → client
 
 ## 5. 写 workspace 时的一串决定
 
-| 决定 | 理由 |
-| :--- | :--- |
-| `[workspace.lints]` 统一策略，crate 内用 `workspace = true` 继承 | 一处改策略，三个 crate 同时生效 |
-| 单一 crate 允许例外 | 只有 `flowcraft-win32` 放开 `unsafe_code`，且额外收紧 `undocumented_unsafe_blocks` |
-| 生成的 proto 用 `#[non_exhaustive]` 之外的错误枚举手写 | 协议的扩展性由 proto 管，错误分类由 Rust 的 `enum` 管 |
-| 版本号只出现在 workspace 级 | 多个 crate 各自写版本，迟早对不上 |
+| 决定                                                             | 理由                                                                               |
+| :--------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| `[workspace.lints]` 统一策略，crate 内用 `workspace = true` 继承 | 一处改策略，三个 crate 同时生效                                                    |
+| 单一 crate 允许例外                                              | 只有 `flowcraft-win32` 放开 `unsafe_code`，且额外收紧 `undocumented_unsafe_blocks` |
+| 生成的 proto 用 `#[non_exhaustive]` 之外的错误枚举手写           | 协议的扩展性由 proto 管，错误分类由 Rust 的 `enum` 管                              |
+| 版本号只出现在 workspace 级                                      | 多个 crate 各自写版本，迟早对不上                                                  |
 
 ## 相关链接
 

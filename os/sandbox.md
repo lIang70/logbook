@@ -28,12 +28,12 @@ type Runner interface {
 
 ## 2. 平台矩阵
 
-| 后端 | 平台 | 隔离 | 网络 | 写策略 | 资源上限 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `local` | 全平台 | 无 | 仅默认 | 只支持 `WriteWorkspace`；`WriteReadOnly` 直接返回 `NotAvailable` | 组 watcher（unix） |
-| `bwrap` | Linux | user/mount/pid/net ns | 默认/全拒/allow-list/代理 | root + 可写路径，可 per-call 只读 | watcher |
-| `seatbelt` | macOS | SBPL profile | 同上 | 同上 | watcher |
-| `windows` | Windows | Job Object + 可选 Low-integrity token + AppContainer | 同上 | 同上（需开 write confinement） | job limits |
+| 后端       | 平台    | 隔离                                                 | 网络                      | 写策略                                                           | 资源上限           |
+| :--------- | :------ | :--------------------------------------------------- | :------------------------ | :--------------------------------------------------------------- | :----------------- |
+| `local`    | 全平台  | 无                                                   | 仅默认                    | 只支持 `WriteWorkspace`；`WriteReadOnly` 直接返回 `NotAvailable` | 组 watcher（unix） |
+| `bwrap`    | Linux   | user/mount/pid/net ns                                | 默认/全拒/allow-list/代理 | root + 可写路径，可 per-call 只读                                | watcher            |
+| `seatbelt` | macOS   | SBPL profile                                         | 同上                      | 同上                                                             | watcher            |
+| `windows`  | Windows | Job Object + 可选 Low-integrity token + AppContainer | 同上                      | 同上（需开 write confinement）                                   | job limits         |
 
 配置面也各有取舍：bwrap 的 `extra_flags` 会拒绝可能削弱策略的 flag（`--ro-bind`、`--args`）；`readonly_root: true` 与指向 root 的 `writable_paths` 冲突时构建期报错，而不是悄悄丢掉。
 
@@ -102,14 +102,14 @@ escalation 是针对这种情况的第二个问题：这一次允许越狱吗？
 
 把一年多零散修的东西归类，比记单个 bug 有用：
 
-| 类 | 症状 | 修法 |
-| :--- | :--- | :--- |
-| check-then-use | `symlink_metadata` → `canonicalize` → `read`，中间换掉父目录就能读出 root 外的文件 | 换 capability handle（`openat2` + `RESOLVE_BENEATH`），一次系统调用定边界 |
-| 先创建后 chmod | `fs::write` 再 `set_permissions(0600)`，中间有可读窗口 | `OpenOptions::mode(0o600).create_new(true)` |
-| 规则没有单一归属 | `platform.yaml` 校验 dns ⇒ TLS，但 capability 的 settings 走 serde 直解，同一规则漏一处 | 规则写进配置解析期校验，不靠各模块自觉 |
-| 有界容器缺一半 | log ring 有上限，session registry / proxy 连接数 / 撤销表没有 | 上限 + 回收 + 观测；只加上限会变成 DoS 型拒绝 |
-| async 里做阻塞 I/O | `async fn` 里调 `std::fs::*` / `to_socket_addrs` / `thread::sleep` | `spawn_blocking` 包一层；门禁目前是 CI 的 `cargo clippy -D warnings` + review，`disallowed-methods` 还在计划里 |
-| 逐层深拷贝 | catalog 每次深拷贝、tool search 每次重建索引、session log 每 chunk 拷两次 | `Arc` 共享 + 单调 revision，消费方 `ptr_eq` 判快照变化 |
+| 类                 | 症状                                                                                    | 修法                                                                                                           |
+| :----------------- | :-------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| check-then-use     | `symlink_metadata` → `canonicalize` → `read`，中间换掉父目录就能读出 root 外的文件      | 换 capability handle（`openat2` + `RESOLVE_BENEATH`），一次系统调用定边界                                      |
+| 先创建后 chmod     | `fs::write` 再 `set_permissions(0600)`，中间有可读窗口                                  | `OpenOptions::mode(0o600).create_new(true)`                                                                    |
+| 规则没有单一归属   | `platform.yaml` 校验 dns ⇒ TLS，但 capability 的 settings 走 serde 直解，同一规则漏一处 | 规则写进配置解析期校验，不靠各模块自觉                                                                         |
+| 有界容器缺一半     | log ring 有上限，session registry / proxy 连接数 / 撤销表没有                           | 上限 + 回收 + 观测；只加上限会变成 DoS 型拒绝                                                                  |
+| async 里做阻塞 I/O | `async fn` 里调 `std::fs::*` / `to_socket_addrs` / `thread::sleep`                      | `spawn_blocking` 包一层；门禁目前是 CI 的 `cargo clippy -D warnings` + review，`disallowed-methods` 还在计划里 |
+| 逐层深拷贝         | catalog 每次深拷贝、tool search 每次重建索引、session log 每 chunk 拷两次               | `Arc` 共享 + 单调 revision，消费方 `ptr_eq` 判快照变化                                                         |
 
 另外两条踩过的：proto3 的"字段缺失 = 继承"是 fail-open 编码，区分不了"没有策略"和"空白名单"，翻默认值必须同时改 wire 字段，否则老 peer 能读回 fail-open；Go 和 Rust 两套实现必须同修，只改一边比保留缺陷更危险——同一份配置在两条路径上语义不同，bug 就变成"换个平台不复现"。
 

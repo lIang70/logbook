@@ -58,14 +58,14 @@ fn find(&self, k: &str) -> Result<Option<Entry>>;
 
 ## 3. 组合子 vs `match`
 
-| 场景 | 写法 |
-| :--- | :--- |
-| 只关心成功值 | `.map(...)` |
-| 需要又一次可能失败的步骤 | `.and_then(...)` |
-| 把 `Option` 变 `Result` | `.ok_or_else(...)` |
-| 出错时换类型/加分类 | `.map_err(...)` |
-| 有默认值 | `.unwrap_or(default)` / `.map_or(default, f)` |
-| 校验 | `.filter(谓词)` / `.filter_map(...)` |
+| 场景                     | 写法                                          |
+| :----------------------- | :-------------------------------------------- |
+| 只关心成功值             | `.map(...)`                                   |
+| 需要又一次可能失败的步骤 | `.and_then(...)`                              |
+| 把 `Option` 变 `Result`  | `.ok_or_else(...)`                            |
+| 出错时换类型/加分类      | `.map_err(...)`                               |
+| 有默认值                 | `.unwrap_or(default)` / `.map_or(default, f)` |
+| 校验                     | `.filter(谓词)` / `.filter_map(...)`          |
 
 > 但**超过三层嵌套就该回到 `match`/`let else`**：组合子的可读性在第三层开始崩，尤其是混着 `and_then` 与 `map` 的时候。
 
