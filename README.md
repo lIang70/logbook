@@ -51,7 +51,7 @@ Language basics (ownership, traits, interior mutability, Option/Result), memory 
 - [traits](rust/language/traits.md) — generics vs `dyn`, monomorphization, associated types, orphan rule
 - [interior_mutability](rust/language/interior_mutability.md) — Cell/RefCell/OnceLock/atomics, `Send`/`Sync`, which lock
 - [option_result](rust/language/option_result.md) — what `?` desugars to, combinators, where `anyhow` stops
-- [memory](rust/runtime/memory.md) — where values live, `size_of` table, Vec/Arc costs, drop order, zero-cost boundaries
+- [memory](rust/runtime/memory.md) — where values live, `size_of` table, Vec/Arc costs, drop order, `repr`/padding control
 - [allocator](rust/runtime/allocator.md) — `Layout` / `GlobalAlloc` contract, swapping the global allocator, arena pitfalls
 - [workspace](rust/architecture/workspace.md) — two packages, one-way module graph pinned by a test, feature layering, generated code
 - [unsafe_boundary](rust/architecture/unsafe_boundary.md) — `forbid(unsafe_code)` and the single crate allowed to break it

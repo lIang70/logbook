@@ -5,7 +5,7 @@
 ## TL;DR
 
 - **逃逸分析 = 编译器决定"变量在栈还是堆"**：逃逸到堆才会被 GC 跟踪，分配和回收都更贵。
-- **典型 case**：循环变量闭包、切片/map 扩容、`interface{}` 装箱、大结构体传值 vs 传指针、`for range` 变量（Go 1.22 之前）。
+- **典型 case**：循环变量闭包、`interface{}` 装箱、大结构体传值 vs 传指针、`for range` 变量（Go 1.22 之前）。注意"切片/map 扩容"常被误列进来——上堆的是 `growslice` 分配的**底层数组**，不是变量逃逸（见案例 2）。
 - **诊断工具**：`go build -gcflags="-m"` 看逃逸；`go build -gcflags="-m -m"` 看更细的；`go test -bench` + `benchstat` 对比；`pprof` 抓 heap/allocs。
 - **核心心法**：少一次堆分配 = 少一次 GC 压力；但不要为了"逃逸对"牺牲代码可读性。
 

@@ -142,7 +142,7 @@
   "event": "llm.call.failed",
   "trace_id": "0af7...",
   "span_id": "b7ad...",
-  "agent": "researcher",
+  "agent": { "name": "researcher" },
   "tool": "web_search",
   "error_type": "rate_limit",
   "error_message": "429 Too Many Requests",
