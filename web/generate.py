@@ -61,7 +61,7 @@ AREAS: tuple[Area, ...] = (
         "ai/harness",
         "AI Harness",
         "04b / 运行时层",
-        "沙箱、控制循环、重试与超时、状态持久化、可观测、I/O、生命周期",
+        "沙箱、控制循环、重试与跑飞熔断、状态持久化、可观测、I/O、生命周期、平台多租户、灰度发布",
     ),
 )
 AREA_BY_PATH = {area.path: area for area in AREAS}

@@ -2,7 +2,7 @@
 
 A personal knowledge base in Markdown — short, opinionated notes written for quick recall, not as tutorials. Topics: Go, Rust, OS internals, AI engineering.
 
-**62 files · 4 areas · last touched 2026-10-28.**
+**66 files · 4 areas · last touched 2026-11-02.**
 
 ## What this is
 
@@ -61,24 +61,25 @@ Language basics (ownership, traits, interior mutability, Option/Result), memory 
 - [testing](rust/engineering/testing.md) — reusable conformance suite, structural layering test, `cfg`-scoped platform tests
 - [tokio](rust/runtime/tokio.md) — `watch` vs `broadcast`, explicit lag events, generation swap and drain, which mutex
 
-### OS (10 files)
+### OS (11 files)
 
-Process/scheduling, memory, concurrency primitives, io, filesystem, payload formats, virt/containers, network stack, scheduler comparison (CFS / UMS / ULE / GMP / tokio), and sandbox/isolation mechanisms (bwrap / seatbelt / AppContainer / WFP / cgroups).
+Process/scheduling, memory, concurrency primitives, io, filesystem, payload formats, **local IPC (unix sockets)**, virt/containers, network stack, scheduler comparison (CFS / UMS / ULE / GMP / tokio), and sandbox/isolation mechanisms (bwrap / seatbelt / AppContainer / WFP / cgroups).
 
 - [memory](os/memory.md) — memory management
 - [process](os/process.md) — process & scheduling
 - [concurrency](os/concurrency.md) — concurrency primitives
 - [filesystem](os/filesystem.md) — filesystem
 - [io](os/io.md) — I/O
+- [ipc](os/ipc.md) — local IPC engineering: socket file permissions, SO_PEERCRED, stale sockets, SCM_RIGHTS, loopback fallback
 - [payload](os/payload.md) — system load and observability metrics (CPU / memory / disk / network / QPS thresholds and tooling)
 - [virtualization](os/virtualization.md) — virtualization / containers
 - [network_stack](os/network_stack.md) — network stack
 - [scheduler_comparison](os/scheduler_comparison.md) — scheduler comparison (CFS / UMS / ULE / GMP / tokio)
 - [sandbox](os/sandbox.md) — sandbox & process isolation mechanisms (bwrap / seatbelt / AppContainer / WFP, pty, cgroups, deny reasons)
 
-### AI (17 files)
+### AI (20 files)
 
-Agent fundamentals, prompt engineering (skeleton / patterns / anti-patterns / injection defense), evals, memory systems, RAG, tools/function calling/MCP, multi-agent, context engineering, self-hosted inference serving, speech/audio pipelines, and a `harness/` subdirectory for the runtime/operational layer (sandbox, control loop, retry, state, observability, I/O, lifecycle).
+Agent fundamentals, prompt engineering (skeleton / patterns / anti-patterns / six-layer injection defense), evals (three-axis taxonomy, judge calibration, badcase loop), memory systems, RAG, tools/function calling/MCP, multi-agent, context engineering, self-hosted inference serving, speech/audio pipelines, and a `harness/` subdirectory for the runtime/operational layer (sandbox, control loop, retry, state, observability, I/O, lifecycle, platform multitenancy, rollout & canary).
 
 - [agent](ai/agent.md) — agent fundamentals
 - [prompt_engineering](ai/prompt_engineering.md) — prompt skeleton, patterns, anti-patterns, injection defense (the old `prompt.md` was merged in)
@@ -89,18 +90,21 @@ Agent fundamentals, prompt engineering (skeleton / patterns / anti-patterns / in
 - [multi_agent](ai/multi_agent.md) — multi-agent orchestration
 - [context_engineering](ai/context_engineering.md) — context engineering
 - [inference_serving](ai/inference_serving.md) — self-hosted inference serving: capacity ledger, startup self-checks, resource sync, CI boundary
+- [model_gateway](ai/model_gateway.md) — multi-provider gateway: wire families, dialects, capability declaration, error normalization, streaming accumulators
 - [speech_audio](ai/speech_audio.md) — realtime voice chain (RTC) and offline audio pipelines (VAD / diarization / ASR / voiceprint / DER)
-- `ai/harness/` — runtime/operational layer: sandbox, control loop, resilience, state, observability, I/O, lifecycle
+- `ai/harness/` — runtime/operational layer: sandbox, control loop, resilience, state, observability, I/O, lifecycle, platform, rollout
 
-**AI harness (runtime layer, 7 files)**:
+**AI harness (runtime layer, 9 files)**:
 
 - [sandbox](ai/harness/sandbox.md) — sandbox & permission enforcement
 - [control_loop](ai/harness/control_loop.md) — control loop implementation & stopping rules
-- [resilience](ai/harness/resilience.md) — retry / timeout / compaction triggers
+- [resilience](ai/harness/resilience.md) — retry / timeout / runaway signals & circuit breaking
 - [state](ai/harness/state.md) — persistence & checkpoint
-- [observability](ai/harness/observability.md) — logging / trace / cost
+- [observability](ai/harness/observability.md) — logging / trace / cost / budget attribution
 - [io](ai/harness/io.md) — streaming / interrupt / HITL / progress
 - [lifecycle](ai/harness/lifecycle.md) — process spawn / isolation / termination
+- [platform](ai/harness/platform.md) — multitenancy, quota & budget tree, audit, engine boundaries
+- [rollout](ai/harness/rollout.md) — manifest versioning, shadow, canary, behavior diff, rollback
 
 ## How to use
 
