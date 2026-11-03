@@ -2,7 +2,7 @@
 
 A personal knowledge base in Markdown — short, opinionated notes written for quick recall, not as tutorials. Topics: Go, Rust, OS internals, AI engineering.
 
-**66 files · 4 areas · last touched 2026-11-02.**
+**67 files · 4 areas · last touched 2026-11-03.**
 
 ## What this is
 
@@ -77,9 +77,9 @@ Process/scheduling, memory, concurrency primitives, io, filesystem, payload form
 - [scheduler_comparison](os/scheduler_comparison.md) — scheduler comparison (CFS / UMS / ULE / GMP / tokio)
 - [sandbox](os/sandbox.md) — sandbox & process isolation mechanisms (bwrap / seatbelt / AppContainer / WFP, pty, cgroups, deny reasons)
 
-### AI (20 files)
+### AI (21 files)
 
-Agent fundamentals, prompt engineering (skeleton / patterns / anti-patterns / six-layer injection defense), evals (three-axis taxonomy, judge calibration, badcase loop), memory systems, RAG, tools/function calling/MCP, multi-agent, context engineering, self-hosted inference serving, speech/audio pipelines, and a `harness/` subdirectory for the runtime/operational layer (sandbox, control loop, retry, state, observability, I/O, lifecycle, platform multitenancy, rollout & canary).
+Agent fundamentals, prompt engineering (skeleton / patterns / anti-patterns / six-layer injection defense), evals (three-axis taxonomy, judge calibration, badcase loop), memory systems, RAG, tools/function calling/MCP, multi-agent, context engineering, self-hosted inference serving, speech/audio pipelines, and a `harness/` subdirectory for the runtime/operational layer (sandbox, control loop, retry, state, observability, I/O, lifecycle, platform multitenancy, rollout & canary, self-learning loop).
 
 - [agent](ai/agent.md) — agent fundamentals
 - [prompt_engineering](ai/prompt_engineering.md) — prompt skeleton, patterns, anti-patterns, injection defense (the old `prompt.md` was merged in)
@@ -92,9 +92,9 @@ Agent fundamentals, prompt engineering (skeleton / patterns / anti-patterns / si
 - [inference_serving](ai/inference_serving.md) — self-hosted inference serving: capacity ledger, startup self-checks, resource sync, CI boundary
 - [model_gateway](ai/model_gateway.md) — multi-provider gateway: wire families, dialects, capability declaration, error normalization, streaming accumulators
 - [speech_audio](ai/speech_audio.md) — realtime voice chain (RTC) and offline audio pipelines (VAD / diarization / ASR / voiceprint / DER)
-- `ai/harness/` — runtime/operational layer: sandbox, control loop, resilience, state, observability, I/O, lifecycle, platform, rollout
+- `ai/harness/` — runtime/operational layer: sandbox, control loop, resilience, state, observability, I/O, lifecycle, platform, rollout, learning
 
-**AI harness (runtime layer, 9 files)**:
+**AI harness (runtime layer, 10 files)**:
 
 - [sandbox](ai/harness/sandbox.md) — sandbox & permission enforcement
 - [control_loop](ai/harness/control_loop.md) — control loop implementation & stopping rules
@@ -105,6 +105,7 @@ Agent fundamentals, prompt engineering (skeleton / patterns / anti-patterns / si
 - [lifecycle](ai/harness/lifecycle.md) — process spawn / isolation / termination
 - [platform](ai/harness/platform.md) — multitenancy, quota & budget tree, audit, engine boundaries
 - [rollout](ai/harness/rollout.md) — manifest versioning, shadow, canary, behavior diff, rollback
+- [learning](ai/harness/learning.md) — trace → signal → proposal → gate → canary; experience entries with scope and expiry
 
 ## How to use
 

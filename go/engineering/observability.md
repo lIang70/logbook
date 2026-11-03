@@ -86,3 +86,4 @@ log.Info("runtime assembled",
 - [pprof 与性能读法](../runtime/pprof.md)（profile 答"分配在哪"，指标答"何时变差"）
 - [测试布局](testing.md)（trace → offline dataset，测试与线上共用一套用例）
 - [可观测性](../../ai/harness/observability.md)（方法论：四件套、四元组、trace→dataset）
+- [自我学习与优化](../../ai/harness/learning.md)（trace→dataset 的下一段：信号分层、经验条目、门禁与退役）
