@@ -46,7 +46,7 @@ LLM 系统的"质量"比传统软件更模糊：输出是自然语言，行为�
 
 ## 目的轴：四类评测
 
-按目标对象与执行形态，可以分四类：
+按**目的**分是四类：能力 / 对齐 / 回归 / 红队（红队见下面的「离线 / 在线 / 红队评测的差异」）。「任务 / Agent 评测」严格说属于**对象轴**（见下一节），但它同时是达成上述目的的手段——所以留在这里作为常用形态，**别把它当成第四种「目的」**。
 
 ### 能力评测（Capability Eval）
 
@@ -61,7 +61,7 @@ LLM 系统的"质量"比传统软件更模糊：输出是自然语言，行为�
 - 例子：HHH Eval、TruthfulQA、RealToxicityPrompts 派生集、企业内部 red team set。
 - 关键点：ground truth 本身是价值判断，需要多元化评审 + 明确 rubric。
 
-### 任务 / Agent 评测（Task / Agent Eval）
+### 任务 / Agent 评测（对象轴的常用手段）
 
 - 形式：在可执行环境里跑任务，看任务完成度。
 - 例子（2026 年还在区分模型的那批）：SWE-bench Verified / Pro（仓库级修 issue）、Terminal-Bench（终端任务）、τ-bench（带工具与用户交互的客服域）、OSWorld（GUI 操作）、WebArena（浏览器）、GAIA（多步推理 + 工具）；HumanEval 这类单函数题已经饱和。

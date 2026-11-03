@@ -5,7 +5,7 @@
 ## TL;DR
 
 - RAG 的核心不是"加一个向量库"，而是把模型回答的依据从"参数里记得"转成"外部可验证的证据"——对应 `agent.md` 里的 grounding 与幻觉缓解。
-- 一条能跑的 RAG pipeline 至少包含 **Ingest → Chunk → Embed → Index → Retrieve → Rerank → Generate → Cite** 这 8 个环节；任何一环短板都会被最终答案放大。
+- 一条能跑的 RAG pipeline 至少包含 **Ingest → Chunk → Embed → Index → Retrieve → Rerank → Generate → Cite** 这 8 个核心环节（Ingest 内部还有 Load/Parse，检索前还有 Query Rewrite）；任何一环短板都会被最终答案放大。
 - 单一 dense embedding 几乎一定不够：**Hybrid（BM25 + dense）+ Rerank** 是 2024 年之后的事实标准；Anthropic Contextual Retrieval 把这一组合的 top-20 失败率从 5.7% 压到 1.9%。
 - 框架按形状选：LangChain（DSL 集成）/ LlamaIndex（索引为中心）/ Haystack（pipeline 强类型）/ DSPy（编译式 prompt）/ RAGFlow（产品级文档理解）/ GraphRAG（图结构）——没有"通用最优"。
 - 评估必须双轨：**检索侧** recall@k / nDCG / context precision，**生成侧** faithfulness / answer relevance；否则"看起来对"的答案随时崩。
@@ -39,7 +39,7 @@ LLM 单独使用的四个硬伤：知识截止、幻觉（`agent.md` 分内在 /
                                                 Optional: Self-RAG / CRAG / Agentic loop
 ```
 
-8 个环节都可独立优化、独立 A/B、独立监控；任何一环短板（PDF 抽取漏字、chunk 切碎、embedding 不匹配、rerank 缺位、prompt 散漫）都会被最终答案放大。
+8 个核心环节都可独立优化、独立 A/B、独立监控；任何一环短板（PDF 抽取漏字、chunk 切碎、embedding 不匹配、rerank 缺位、prompt 散漫）都会被最终答案放大。
 
 ## 3. Ingestion 与 Chunking
 
