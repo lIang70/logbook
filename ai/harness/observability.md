@@ -196,7 +196,7 @@ WHERE span.kind = 'llm.call' AND timestamp > NOW() - INTERVAL '7 days'
 GROUP BY agent.name ORDER BY total_cost DESC LIMIT 10;
 ```
 
-`cost_per_output_token` 是高信号指标——高 cost + 低 output 比例 = 模型"话多"或 prompt 浪费；高 cost + 高 output 比例 = 任务本身就要写很多。
+`cost_per_output_token` 是高信号指标——**高 cost + 低 output 比例 = 输入侧浪费**（prompt / 检索片段 / few-shot 太长，每单位输出摊了更多输入）；高 cost + 高 output 比例才可能是模型“话多”，也可能只是任务本身要写很多——要看 output token 的绝对值。
 
 > **进一步**：和 [多 Agent 编排](../multi_agent.md) §11 的 trajectory 评测联动——cost 高的 agent 是不是**也**是失败率高的 agent？高 cost + 高失败率 = 这个 agent 既贵又没用，是优化的第一目标。
 

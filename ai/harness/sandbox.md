@@ -4,10 +4,10 @@
 
 ## TL;DR
 
-- **Sandbox 的核心语义是"默认拒绝 + 显式 allow"**，不是"加个 Docker 装上就安全"。装上而不配置 = 默认放行，危害比不装还大。
+- **Sandbox 的核心语义是"默认拒绝 + 显式 allow"**，不是"加个 Docker 装上就安全"。装上而不配置 = 默认放行，而且带来**虚假安全感**——比明确知道"没隔离"更难发现。
 - **Agent runtime 和 tool runtime 是两回事**。Agent 容器里的 `~/.ssh/` / `~/.aws/` 默认被 tool 继承是经典事故；harness 必须把"工具的执行环境"和"agent 的运行环境"显式切开。
 - 资源限制分两层：**单次 tool 调用**（CPU / 内存 / fd / wall-clock，syscall / cgroup 层）和**整个 session 生命周期**（总 quota、cost、步数，harness 状态机层）。
-- 网络策略最容易"装了一半"——**DNS 必须显式处理**：只封 IP 没用，agent 用 `getent hosts` 就绕过；egress 过滤必须在 DNS 解析前生效。
+- 网络策略最容易"装了一半"——**DNS 必须显式处理**：只封 IP 没用，agent 用 `getent hosts` 就绕过。做法是接管 DNS 通道（只放行内网 resolver），再对解析出的 IP 做白名单回查。
 - 权限 policy（"高风险动作要二次确认"）必须在 **harness 层强制**，不能只写在 prompt。模型照删不误——harness 要先 deny、再由 UI 弹确认、再放行。
 - **sandbox 不是越多越安全**。每多一层隔离，agent 工具能力就少一截；过度 sandbox 会让模型退化到"只能做无害的事"，再无任务价值。
 
@@ -77,9 +77,9 @@ Agent 调 `shell.run("python train.py")` 时，harness 至少要在 4 个维度�
 | **CPU**        | cgroup `cpu.max` / `taskset` / `RLIMIT_CPU` | 1-2 核 / 调用      |
 | **内存**       | cgroup `memory.max`                         | 512MB - 4GB / 调用 |
 | **fd**         | `prlimit(RLIMIT_NOFILE)`                    | 64-1024            |
-| **wall-clock** | `alarm` / `RLIMIT_CPU` / 监控进程 SIGKILL   | 30s - 10min / 调用 |
+| **wall-clock** | `alarm` / 监控进程 SIGKILL + 超时看门狗     | 30s - 10min / 调用 |
 
-> **常见反模式**：只设 wall-clock。模型写的死循环 CPU 100% 跑满 5 分钟才被 kill，期间把同机其他租户挤爆。**CPU 限制必须有**——`RLIMIT_CPU` 是软的（按 CPU 秒），cgroup 是硬的（按核 × 比例）。
+> **常见反模式**：只设 wall-clock。模型写的死循环 CPU 100% 跑满 5 分钟才被 kill，期间把同机其他租户挤爆。**CPU 限制必须有**——`RLIMIT_CPU` 只限累计 CPU 秒、管不住瞬时占用率；按核节流要靠 cgroup 的 `cpu.max`。
 
 ### 3.1 为什么要单独管子进程
 

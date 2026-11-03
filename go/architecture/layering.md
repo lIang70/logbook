@@ -11,7 +11,7 @@
 - **`Scope` 这类分区键是产品决策，不是实现细节**：它同时决定隔离、计费和检索范围。
 - **多 provider 的正确抽象是"部署名 + 一套协议"**——DeepSeek、GLM 骑 OpenAI 协议，于是它们是部署名，不是新模块。
 
-## 1. 四层
+## 1. 四层（外加一组发布工具）
 
 ```text
 core       平台层：agent 执行、graph、tool、model、message、skills、inference、

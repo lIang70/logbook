@@ -50,7 +50,7 @@ start ─> [running] ─pause─> [paused] ─resume─> [running]
 
 ### 进程级 spawn 的标准范式
 
-```python
+```go
 # Go: 子 agent 进程 + context 取消 + 资源回收
 ctx, cancel := context.WithTimeout(parent, 30*time.Minute)
 defer cancel()                       // L1: 取消传播

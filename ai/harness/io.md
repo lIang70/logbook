@@ -125,7 +125,7 @@ data: {
 | :--------------------------- | :------- | :------------------------ |
 | 高风险（删 / 发 / 付）       | 超时拒绝 | 落到异步审批队列          |
 | 中风险（写文件 / 改 config） | 超时回滚 | 提交 plan 给 owner review |
-| 低风险（搜索 / 总结）        | 超时继续 | 任务跑完时附 warning      |
+| 低风险（总结 / 草稿）        | 超时继续 | 任务跑完时附 warning      |
 | 纯查询（不写）               | 永不挂起 | —                         |
 
 > HITL 的"等待"与控制循环的"cycle"是两种不同的时间。**等待是"任务暂停在已知点"，cycle 是"任务在自驱迭代"**。UI 上要分清两种——前者要倒计时，后者要给阶段汇报。
@@ -184,7 +184,7 @@ data: {
 2. **挂起**：命中就转 HITL 等待，发 `INPUT_REQUIRED` 事件。
 3. **审计**：批准 / 拒绝 / 超时三类结果都进 log，与 tool call、user、timestamp 绑定——**policy 执行可追溯**。
 
-policy 不该硬编码在 harness 代码里。policy 是 prompt 的一部分（"高风险 = 删 / 改 / 发 / 付"），可以由系统 prompt 注入；harness 只负责"识别 + 等待 + 记录"。policy 改了，harness 不用发版。
+policy 不该硬编码在 harness 代码里，但它**也不能只活在 prompt 里**——harness 必须读同一份声明式规则，才能做"识别 + 等待 + 记录"。做法是规则放 config（可同时渲染进系统 prompt），harness 从 config 读并 enforce；规则改了，harness 不用发版。
 
 > 很多人把"高风险确认"写死在 tool 的 metadata 里（"这个工具的 `destructive: true`"），结果 policy 改不动、也评不了。**正确的分层：policy 在 prompt / config 里声明，harness 提供 enforce 机制**。
 

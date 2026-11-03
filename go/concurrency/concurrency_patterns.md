@@ -6,7 +6,7 @@ Go 的 CSP 模型鼓励 "Do not communicate by sharing memory; instead, share me
 
 - 所有模式只围绕一件事：**每个 goroutine 的退出条件**。没有退出条件的 goroutine 就是泄漏，`ctx.Done()` 是默认答案。
 - 五个基础形状（generator / fan-in / pipeline / fan-out worker pool / tee）+ 两个“保险丝”（`orDone` 包住输入、`errgroup` 首个错误取消其余）覆盖了经大多数场景：**先挑形状，再谈优化**。
-- **限并发用信号量（buffered channel），不是无限 `go func`**：`sem <- struct{}{}` 必须在 `go` **之前**执行；放进 goroutine 里就只是限流，不是限并发。
+- **限并发用信号量（buffered channel），不是无限 `go func`**：`sem <- struct{}{}` 要在 `go` **之前**执行，才能既限住同时执行数、又限住 goroutine 数；放进 goroutine 里只能限住前者——每个 item 仍会先起一个 G 在 sem 上排队，内存照涨。
 - **channel 只由发送方关闭**；`tee` 里“把输出置 nil 禁用对应 case”是 nil channel 语义最实用的落地。
 - 取消是**协作式**的：只要有一个环节不监听 ctx，整条 pipeline 就退不干净——所以每个 stage 的 select 都必须带 `<-ctx.Done()`。
 

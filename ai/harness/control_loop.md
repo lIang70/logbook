@@ -36,10 +36,11 @@ def run(session: Session) -> Result:
             session.observe(chunk)               # text_delta → user; tool delta → buffer
         match response.finish_reason:
             case "tool_use" | "tool_calls":
+                session.state = State.AWAITING_TOOL   # 先转态，再执行
                 for call in response.tool_calls:
                     result = sandbox.run(call, timeout=sandbox_timeout)
                     session.inject_tool_result(call.id, result)
-                session.state = State.AWAITING_TOOL
+                session.state = State.RUNNING          # 结果回填后显式回到 running
             case "stop" | "end_turn":
                 session.mark_done(response.text)
             case "length" | "content_filter" | "error":
@@ -150,7 +151,7 @@ driver 要兼容三种 tool call 来源：
 - **文本嵌入的工具指令**（ReAct 风格的 `Action: ... Action Input: {...}`）：需要正则 / grammar 解析；多轮 batch 时按出现顺序拼回
 - **多轮 tool call 的批处理**：同一 `finish_reason=tool_use` 里可能有 N 个 call，driver 要**并行**调（前提是相互独立，详见 [工具使用](../tools.md) §7），再统一回填
 
-## 8. 三个容易写反的地方
+## 8. 五个容易写反的地方
 
 > **控制循环不是 agent "思考"的引擎，而是 agent 表达"行动"的接口。**
 

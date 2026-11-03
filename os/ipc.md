@@ -44,7 +44,7 @@ if err := os.Chmod(path, 0o600); err != nil { /* 关掉 listener，清理目录 
 协议里带 `uid` 字段是**声明**，`SO_PEERCRED` 才是**事实**。
 
 - **Linux**：`getsockopt(SO_PEERCRED)` → `ucred{pid, uid, gid}`，在 `connect` 时刻由内核填写。
-- **macOS / BSD**：`getpeereid(2)` 或 `LOCAL_PEERCRED`，只有 uid/gid，**没有 pid**（跨平台代码不能依赖 pid）。
+- **macOS / BSD**：`getpeereid(2)` 或 `LOCAL_PEERCRED`，只有 uid/gid；macOS 拿不到 pid，FreeBSD 另有 `LOCAL_PEERPID`——**不跨平台，所以跨平台代码不能依赖 pid**。
 - **抽象命名空间**（Linux `sun_path[0] == '\0'`）：不落文件系统、进程退出自动消失，**因此没有文件权限可依**——访问控制只能靠 `SO_PEERCRED`，或者干脆不用抽象 socket。
 
 三条实践结论：
@@ -92,7 +92,7 @@ if 文件存在:
 ## 6. 连接语义：half-close、backlog、首字节分流
 
 - **half-close 是协议信号，不是异常**：客户端 `shutdown(SHUT_WR)`（Go 里 `conn.(*net.UnixConn).CloseWrite()`）表示"我说完了"，服务端 `Read` 返回 `io.EOF`。把 EOF 当错误处理会导致"正常结束的连接被记为失败"。
-- **accept 之后不能做阻塞工作**：accept loop 里做解析/落盘/等锁，会导致 backlog 堆满——Linux 的 backlog 还受 `somaxconn` 上限约束，超了客户端拿到的是 `ECONNREFUSED`（不是"排队"）。表现是"高峰期随机连不上"。
+- **accept 之后不能做阻塞工作**：accept loop 里做解析/落盘/等锁，backlog 会堆满。注意 AF_UNIX 的 backlog **不受 `somaxconn` clamp**（那只作用于 `inet_listen`），堆满的表现是 connect 阻塞 / `EAGAIN` / 超时，**不是 `ECONNREFUSED`**（那个含义是"根本没有监听者"）。表现是"高峰期随机连不上"。
 - **一个 socket 上分流多个协议**：靠**首字节**判断（SOCKS5 是 `0x05`，HTTP 是 `G`/`P` 等 ASCII）——`netproxy` 就是这么在同一个 unix socket 上同时服务 SOCKS5 与 HTTP 代理的。省一个监听，代价是"两个协议的生命周期绑在一起"，且代理中间件（如 TLS 探测）会变复杂。
 - **超时是必须的**：本机 socket 也会被卡死的客户端拖住。至少设读超时 / idle 超时（`http.Server` 的 `ReadHeaderTimeout` / `IdleTimeout`），否则一个 debug 时 `nc` 连上不发的终端就能占住一个 goroutine。
 

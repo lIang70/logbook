@@ -302,8 +302,7 @@ Context 装得好不好，独立于"最终任务成功率"也要测。四类指�
 
 ## 相关链接
 
-- [提示工程](prompt_engineering.md)——"长上下文技巧"那一节讲 prompt **内部**排版（锚定、分段标签、`[[id]]` 引用、缓存友好布局），本篇讲 prompt **外部**装配；其余 prompt 模式（CoT / ReAct / 结构化输出）见该文
-- [提示工程](prompt_engineering.md)——5 元素框架与 Level 1/2/3 层级（CE 的"指令层"基础）
+- [提示工程](prompt_engineering.md)——骨架（五要素）+ 精修 + 高阶技法；其中"长上下文技巧"讲 prompt **内部**排版（锚定、分段标签、`[[id]]` 引用、缓存友好布局），本篇讲 prompt **外部**装配（CoT / ReAct / 结构化输出等模式也见该文）
 - [Agent](agent.md)——agent 闭环架构（CE 的"动作层"基础）
 - [评测](evals.md)——context 利用率、必要 token 比、cache hit rate 这些指标的测试方法
 - [AI 记忆系统](memory.md)——长期 memory 系统的工程实现（本篇"外部层"的具体落地）

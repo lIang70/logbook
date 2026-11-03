@@ -111,8 +111,8 @@ Disk -> Kernel Buffer -> User Buffer -> Kernel Socket Buffer -> Network
 2. **sendfile**
    - `ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);`
    - 直接在内核空间传输数据 (Disk Buffer -> Socket Buffer)。
-   - 2 次上下文切换，2 次拷贝 (Disk->Kern, Kern->Socket) + DMA。
-   - 若网卡支持 SG-DMA，可实现真正的“零 CPU 拷贝”。
+   - 2 次上下文切换，2 次 **DMA** 拷贝；中间那次“内核页缓存 → socket 缓冲”在没有 SG-DMA 时**是 CPU 拷贝**，所以总计是 2 DMA + 0~1 CPU。
+   - 网卡支持 SG-DMA 时那次 CPU 拷贝也省掉，才是真正的“零 CPU 拷贝”。
 
 3. **splice**
    - 两个文件描述符之间移动数据，不经过用户空间。

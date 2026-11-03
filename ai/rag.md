@@ -214,7 +214,7 @@ bi-encoder（embedding）把 query 和 doc 压成单向量丢失大量细节；c
 
 - **Faithfulness**：答案的每个 claim 是否都能在 context 里找到支持——衡量"有没有编"。
 - **Answer Relevancy**：答案是否真的回答了 question——衡量"有没有跑题"。
-- **Context Precision / Recall**：相关 chunk 是否被排在前面 / 是否全被召回——衡量检索质量。
+- **Context Precision / Recall**：相关 chunk 是否被排在前面 / 是否全被召回——这两个**属于检索侧**指标；RAGAS 把它们并进同一套件，但计算不依赖生成答案。
 
 **TruLens 的 RAG Triad**（异曲同工）：Context Relevance / Groundedness / Answer Relevance——三个角两两评估，任何一边断了都会幻觉。
 

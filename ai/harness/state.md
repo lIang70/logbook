@@ -184,7 +184,7 @@ def execute_side_effect(step_id, action):
 
 1. **"加个 log" ≠ checkpoint**：log 是 best-effort，checkpoint 必须是强一致原子写。
 2. **三者一致**（state + 副作用 + trace）缺一不可，缺哪个就出对应类型的 bug。
-3. **先写 outbox，再发动作**——失败在中间 = 双扣款。
+3. **先写 outbox，再发动作**——outbox 保证动作不丢；但“发出去 → 标记 sent”之间崩溃仍会重发，所以**目标端必须按 `idempotency_key` 去重**，光改顺序消除不了双扣款。
 4. **不要每步都落**——决策点 + 定时器兜底，配合幂等三件套就够了。
 5. **Resume 不是重跑**，是"从最近 checkpoint 继续"——否则成本 O(N) 而非 O(剩余)。
 6. **状态机序列化 > 对象图 JSON 化**：FSM 可重放、可分支、可审计。

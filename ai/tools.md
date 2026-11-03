@@ -177,7 +177,7 @@ Toolformer 论文（Schick et al., 2023, arXiv:2302.04761）证明：让模型�
 - **天然独立 → 并行**：查 3 个城市天气、读 5 个文件；OpenAI / Anthropic / Gemini 默认就并行
 - **有依赖 → 串行**：先 `get_current_location()` 再 `get_weather(location)`；强行并行会让模型编参数
 - **写操作 → 默认串行**：并行写有竞态、有部分失败、难回滚
-- **混合**：先并行读、汇总后再串行写；这是 ReAct（Yao et al., 2023, arXiv:2210.03629）的典型结构
+- **混合**：先并行读、汇总后再串行写；这是 ReAct 循环加上**并行 fan-out** 的常见变体（ReAct 本身是单线 Thought→Action→Observation，没有并行语义）
 
 可以在 prompt / tool description 显式提示："独立查询可并行；写操作请逐个执行并验证"。或在框架层（LangGraph、trpc-agent-go）用 DAG 把依赖固化，不依赖模型自觉。
 
@@ -222,7 +222,7 @@ Toolformer 论文（Schick et al., 2023, arXiv:2302.04761）证明：让模型�
 - **ToolBench / ToolEval**（Qin et al., 2023, arXiv:2307.16789）：16,464 个 RapidAPI 工具，ToolEval 用 LLM-as-judge 替代人工
 - **API-Bank**（Li et al., 2023, arXiv:2304.08244）：73 个可执行工具 + 314 标注对话，评估 planning / retrieving / calling
 - **Gorilla / APIBench**（Patil et al., 2023, arXiv:2305.15334）：HuggingFace + TorchHub + TensorHub 三大 ML API 库
-- **τ-Bench**（Sierra / Anthropic）：拟真客服场景的对话级评测
+- **τ-Bench**（Sierra）：拟真客服场景的对话级评测
 - **SWE-bench**：把"修 GitHub issue"作为 agent-level 任务（间接评测工具能力）
 
 > 反直觉点：**单工具准确率高 ≠ 端到端任务成功**。`tool_call_accuracy=0.95` 听起来不错，但 10 步任务的成功率会被压到 `0.95^10 ≈ 0.6`。任务长度本身就是难度。

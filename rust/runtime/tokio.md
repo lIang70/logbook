@@ -85,7 +85,7 @@ let mut current = self.current.lock().await;
 
 - 用 `broadcast` 传"当前状态"：慢消费者会看到过期状态，且顺序不可假设。
 - 用 `watch` 传事件：中间过程直接消失。
-- 在 `std::sync::Mutex` 守卫还活着时 `.await`：需要 `Send` 的 future 会直接编译失败（`MutexGuard: !Send`）；但 `current_thread` / `block_on` 这类不要求 `Send` 的上下文编得过，然后在运行时死锁。
+- 在 `std::sync::Mutex` 守卫还活着时 `.await`：需要 `Send` 的 future 会直接编译失败（`MutexGuard: !Send`）；能绕过 `Send` 的只有 `block_on` / `LocalSet::spawn_local` 这类上下文——那里编得过，然后在运行时死锁（`current_thread` runtime 上的 `tokio::spawn` 同样要求 `Send`）。
 - reload 时先 drain 再 swap：切换窗口内没有可用世代。
 - 把"排空超时"当致命错误：已经生效的切换被回滚，比不排空更糟。
 - 用 `spawn` 起的任务没人持有 `JoinHandle`，关闭时静默泄漏。

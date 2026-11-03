@@ -127,11 +127,11 @@ Guest 维护的是“虚拟物理地址 (GVA → GPA)”的页表，宿主要做
 
 > cgroup (control group) 是内核对进程组进行**资源配额与统计**的机制，与 namespace 的“视图隔离”互补。
 
-常见 cgroup v2 子系统：
+常见 cgroup v2 子系统（controller；括号里是它的**参数文件**，不是独立子系统）：
 
-- `cpu`, `cpuset`, `cpu.weight` — CPU 份额与绑核
-- `memory`, `memory.max`, `memory.swap.max` — 内存/交换区上限
-- `io`, `io.max` — 块设备带宽/IOPS 限额
+- `cpu`（`cpu.weight` / `cpu.max`）— CPU 份额与上限；`cpuset`（`cpuset.cpus`）— 绑核
+- `memory`（`memory.max` / `memory.swap.max`）— 内存与 swap 上限
+- `io`（`io.max`）— 块设备带宽 / IOPS 限额
 - `pids`, `pids.max` — 进程数上限（防 fork 炸弹）
 
 > cgroup 不是 namespace 的"强化版"。它约束的是**用量**，不隔离视图：`memory.max` 触发的 OOM 会在这个 cgroup 内挑一个进程杀，同组的兄弟进程一起受影响。

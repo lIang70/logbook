@@ -15,13 +15,13 @@ Linux CFS 内部细节看 [Process](process.md) 的 8.2 节；Go GMP 内部细�
 
 > 调度器的“单位”决定了它所有的设计取舍：切换成本、可达数量、隔离方式。
 
-| 调度对象                                     | 典型栈大小    | 切换成本                  | 数量级      | 例子                       |
-| :------------------------------------------- | :------------ | :------------------------ | :---------- | :------------------------- |
-| **OS 线程**                                  | 1~8 MB        | 一次系统调用 + 上下文切换 | 数百~数千   | Linux task、Windows thread |
-| **Goroutine**                                | 2 KB 起，动态 | 用户态切换，runtime 调度  | 数十万~百万 | Go GMP                     |
-| **Tokio task**                               | 几乎为 0      | 用户态调度                | 数十万~百万 | Rust tokio runtime         |
-| **UMS fiber (Windows)**                      | 12 KB 起      | 用户态切换                | 数千~数万   | Windows UMS                |
-| **Linux 协程 (io_uring task / userfaultfd)** | 自管          | 用户态                    | 视实现      | io_uring / 自实现          |
+| 调度对象                                 | 典型栈大小    | 切换成本                  | 数量级      | 例子                       |
+| :--------------------------------------- | :------------ | :------------------------ | :---------- | :------------------------- |
+| **OS 线程**                              | 1~8 MB        | 一次系统调用 + 上下文切换 | 数百~数千   | Linux task、Windows thread |
+| **Goroutine**                            | 2 KB 起，动态 | 用户态切换，runtime 调度  | 数十万~百万 | Go GMP                     |
+| **Tokio task**                           | 几乎为 0      | 用户态调度                | 数十万~百万 | Rust tokio runtime         |
+| **UMS fiber (Windows)**                  | 12 KB 起      | 用户态切换                | 数千~数万   | Windows UMS                |
+| **用户态 fiber (`ucontext` / `setjmp`)** | 自管栈        | 用户态                    | 数千~万     | 自实现                     |
 
 > 真正选型时，先选“**调度对象**”，再选“**调度器**”：协程框架会限制你能用的系统调用、阻塞行为、栈深度。
 
@@ -171,7 +171,7 @@ Linux CFS 内部细节看 [Process](process.md) 的 8.2 节；Go GMP 内部细�
 - “**tokio 多线程 = Go GMP**”：思路相近但 tokio 默认**不抢占**，CPU bound 的 future 会卡死 worker 线程；务必用 `spawn_blocking` 隔离阻塞。
 - “**Windows UMS 是 Windows 版 goroutine**”：错。UMS 是 OS 提供的**机制**（让应用接管调度），而 goroutine 是**自带调度器的语言特性**。Go 在 Windows 上也跑 M:N，但 UMS 不参与。
 - “**调度器越公平越好**”：对延迟敏感任务，“公平”意味着把时间片给不相干的任务；需要主动分组/绑核。
-- “**CFS 是 Linux 唯一的调度器**”：除 CFS 外还有 `SCHED_FIFO/RR/DEADLINE`、`EEVDF`（6.6 之后）、`sched_ext`（6.12+）等多种路径。
+- “**CFS 是 Linux 唯一的调度器**”：错两层——fair 类**内部**，6.6 起 EEVDF 已取代 CFS 的算法、6.12+ `sched_ext` 能整体替换它；fair 类**之外**另有 `SCHED_FIFO/RR/DEADLINE` 这组独立调度类。另外 `io_uring` / `userfaultfd` 也不是调度对象（前者是异步 I/O 提交/完成队列，后者是缺页接管）。
 
 ## 相关链接
 

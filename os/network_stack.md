@@ -6,7 +6,7 @@ I/O 多路复用的 epoll/io_uring 部分与 [I/O Management](io.md) 互补阅�
 ## TL;DR
 
 - 数据通路主线：`NIC → 驱动 → NAPI → ip_rcv → TCP/UDP → socket → 用户态`。
-- **零拷贝**的演进：`read+write` → `mmap` → `sendfile` → `splice` → `MSG_ZEROCOPY`，每一代都在减少一次**用户态 ↔ 内核态**的拷贝。
+- **零拷贝**的演进：`read+write` → `mmap` → `sendfile` → `splice` → `MSG_ZEROCOPY`。要看清**每一代换的是什么**：前两代省 CPU 拷贝；`splice` 换的是**适用面**（fd 无关、但要一端是 pipe，拷贝次数并不比 sendfile 少）；`MSG_ZEROCOPY` 换的是**pin + 完成通知**的开销模型。
 - **协议栈 offload** (TSO/GSO/LRO…) 把分段/校验和/重组下放到网卡/驱动；正确打开是性能，错配是“反咬一口”的延迟与丢包。
 - **多路复用**从 `select/poll` 走到 `epoll`，再走到 `io_uring`：核心问题是“怎么用尽量少的 syscall 让一个线程等很多 FD”。
 - **eBPF/XDP** 给了在“网卡刚收到包”和“TC 分类器”位置运行自定义程序的钩子，是现代可观测/安全/负载均衡的关键。
@@ -38,7 +38,7 @@ I/O 多路复用的 epoll/io_uring 部分与 [I/O Management](io.md) 互补阅�
 - 第一个包 → 硬中断唤醒 softirq。
 - 后续包 → 关闭硬中断，**轮询 ring buffer** 取包，直到空或配额用尽，再开中断。
 - **优点**：高吞吐时减少中断开销，CPU 用来跑业务而不是被中断“打断-打断-打断”。
-- **反咬**：轮询会一直占用 CPU，低流量时没有包时仍会消耗调度时间（需配合 `gro_flush_timeout`/`busy_poll` 等调参）。
+- **反咬**：轮询在 ring 空时就退出并重新开中断，所以**低流量不会空转**；真正的问题是 **flood 时 budget 耗尽**，softirq / ksoftirqd 长时间占住同一核并饿死业务线程。调参点是 `net.core.netdev_budget`、`gro_flush_timeout`、中断亲和。
 
 ### 1.3 协议栈入口：ip_rcv 与软中断上下文
 

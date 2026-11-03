@@ -119,9 +119,8 @@ func byPtr(s *Big) *Big { return s } // 8B（指针）
 
 ```bash
 $ go build -gcflags="-m" main.go
-./main.go:6:18: s does not escape          # byVal
+./main.go:6:18: s does not escape          # byVal：传值
 ./main.go:7:20: leaking param: s           # byPtr：形参被外传
-./main.go:12:15: &x escapes to heap        # 调用点决定 x 上堆
 ```
 
 > 注意 `leaking param` 不是"被调函数把 s 放到了堆上"——被调函数只是把参数返回出去，是否上堆由调用点决定。所以"少一次堆分配"不等于"传值更好"：要看结构体大小和是否被外部引用。
