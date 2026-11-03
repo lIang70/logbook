@@ -168,7 +168,7 @@ flowcraft 把这件事讲得很清楚：BM25、vector、entity 三路并行 → 
 ```text
                   ┌──► BM25 lane   ──┐
   query ──────────┼──► vector lane ──┼──► RRF (K=60) ──► [entity boost + supersede decay + time decay] ──► final ranking
-                  └──► entity lane  ──┘
+                  └──► entity lane ──┘
 ```
 
 - **RRF（Reciprocal Rank Fusion）**：把每路给每个文档的排名倒数求和再重排。**优点是免调权**——只需要定 K（典型 60），不需要每路有自己的相似度归一化。

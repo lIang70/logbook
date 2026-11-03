@@ -32,9 +32,9 @@ LLM 单独使用的四个硬伤：知识截止、幻觉（`agent.md` 分内在 /
    原始数据  →  Load  →  Parse  →  Chunk  →  Embed  →  Index ─┘
                                                               │
                                                               ↓
-                                                       ┌──────────┐
-   用户 Query  →  Query Rewrite  →  (Hybrid) Retrieve ─→  Rerank   ─→  Generate  →  Cite
-                                                       └──────────┘
+                                                         ┌──────────┐
+   用户 Query  →  Query Rewrite  →  (Hybrid) Retrieve ─→ │  Rerank  │  ─→  Generate  →  Cite
+                                                         └──────────┘
                                                               ↑
                                                 Optional: Self-RAG / CRAG / Agentic loop
 ```

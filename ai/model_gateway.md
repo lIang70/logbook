@@ -31,7 +31,7 @@
 ```text
 family: openai-wire      family: messages-wire      family: vendor-native
 ├── openai               ├── anthropic              ├── bytedance
-├── azure (routing)      └── (其它兼容者)            ├── minimax
+├── azure (routing)      └── (其它兼容者)           ├── minimax
 ├── deepseek                                        └── dashscope
 └── glm
 ```
