@@ -12,6 +12,8 @@
  *   assets stale-while-revalidate — Material's bundle filenames carry a
  *                           content hash, so a stale asset can only ever be
  *                           requested by a stale page, which is also stale.
+ *                           Our own files do NOT carry a hash, so they are
+ *                           listed in VOLATILE and treated like HTML.
  *
  * `__BUILD_ID__` is stamped by web/build.py on every stage: a content-only
  * deploy still rotates the cache name, so readers never sit on an old build.
@@ -33,6 +35,11 @@ const SHELL = [
   "assets/apple-touch-icon.png",
   "assets/pwa.js",
 ].map((path) => ROOT + path);
+
+/* Stable filenames that we own and edit often. Serving these stale pairs a
+ * fresh page with the previous build's stylesheet, which reads as "the site is
+ * broken" — the one thing stale-while-revalidate must not do here. */
+const VOLATILE = ["stylesheets/theme.css"].map((path) => ROOT + path);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -75,11 +82,14 @@ self.addEventListener("fetch", (event) => {
 
   /* `navigation.instant` requests pages with fetch() (mode "cors"), so a
    * request is HTML if it is a navigation *or* it advertises text/html. */
-  const wantsHtml =
+  const wantsFresh =
     request.mode === "navigate" ||
-    (request.headers.get("accept") || "").includes("text/html");
+    (request.headers.get("accept") || "").includes("text/html") ||
+    VOLATILE.includes(url.href);
 
-  event.respondWith(wantsHtml ? networkFirst(request) : staleWhileRevalidate(request));
+  event.respondWith(
+    wantsFresh ? networkFirst(request) : staleWhileRevalidate(request),
+  );
 });
 
 async function networkFirst(request) {
