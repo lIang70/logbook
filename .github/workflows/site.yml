@@ -15,7 +15,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # prettier --check (markup) + scripts/format.py --check (repo policy:
+      # fence language tags, no `---`, no emoji, relative links, heading jumps).
+      # Prettier is pinned in the Makefile and fetched through npx, so there is
+      # no package.json / lockfile to install here.
+      - name: Markdown format + convention checks
+        run: make check
+
   build:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
