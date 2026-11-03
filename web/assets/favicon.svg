@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" fill="#17150f"/>
-  <rect width="64" height="5" fill="#b03a2e"/>
-  <text x="31" y="46" font-family="Georgia, 'Songti SC', serif" font-size="38" fill="#faf8f4" text-anchor="middle">f</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="logbook">
+  <title>logbook</title>
+  <rect width="64" height="64" rx="14" fill="#a8342a"/>
+  <rect x="9" y="9" width="46" height="46" rx="6" fill="none" stroke="#faf7f1" stroke-opacity=".55" stroke-width="2.5"/>
+  <path d="M26.5 21V43H44.5" fill="none" stroke="#faf7f1" stroke-width="6.5" stroke-linecap="square"/>
 </svg>

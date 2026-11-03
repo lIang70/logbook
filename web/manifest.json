@@ -1,0 +1,25 @@
+{
+  "name": "logbook",
+  "short_name": "logbook",
+  "description": "l1ang70 的个人工程笔记 — Go / Rust / OS / AI，写给快速回忆，不写教科书。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf7f1",
+  "theme_color": "#a8342a",
+  "categories": ["books", "education", "productivity"],
+  "icons": [
+    { "src": "./assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "AI", "url": "./ai/" },
+    { "name": "Go", "url": "./go/" },
+    { "name": "Rust", "url": "./rust/" },
+    { "name": "OS", "url": "./os/" }
+  ]
+}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="logbook">
+  <title>logbook</title>
+  <rect width="64" height="64" fill="#a8342a"/>
+  <rect x="8" y="8" width="48" height="48" fill="none" stroke="#faf7f1" stroke-opacity=".42" stroke-width="1.5"/>
+  <path d="M26.5 21V43H44.5" fill="none" stroke="#faf7f1" stroke-width="6.5" stroke-linecap="square"/>
+</svg>

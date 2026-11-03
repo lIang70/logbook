@@ -14,6 +14,14 @@ Zensical does not support MkDocs `hooks`, so the generated navigation scaffoldin
 `web/generate.py`, into the staging directory. The effective config is
 `web/mkdocs.generated.yml` — `web/mkdocs.yml` plus that nav block.
 
+The same limitation bites the PWA metadata: the theme exposes no head partial to
+override (`partials/head.html` is ignored), so `inject_pwa()` appends the
+manifest / apple-touch-icon / theme-color / registration tags to every built
+page after Zensical runs. `web/sw.js` and `web/manifest.json` must live at the
+*site root* — a worker under `/assets/` would only control `/assets/`, and
+GitHub Pages cannot send `Service-Worker-Allowed`. `make serve` skips the
+injection, so a local preview is a plain site (no install prompt, no offline).
+
 Usage:
     web/build.py            # build web/.build/site
     web/build.py --serve    # live reload on http://127.0.0.1:8000
@@ -27,6 +35,7 @@ import importlib.util
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 WEB = Path(__file__).resolve().parent
@@ -37,6 +46,10 @@ CONFIG = WEB / "mkdocs.yml"
 GENERATED_CONFIG = WEB / "mkdocs.generated.yml"
 STAGED_DIRS = ("assets", "stylesheets")  # inside web/, copied next to the pages
 STAGED_FILES = ("LICENSE",)  # README links to it
+# Staged into the docs root, not a subdirectory: the service worker's default
+# scope is its own directory, and GitHub Pages cannot widen it with headers.
+WEB_ROOT_FILES = ("manifest.json", "sw.js")
+BUILD_ID_PLACEHOLDER = "__BUILD_ID__"
 SKIP_META = {"AGENTS.md", "README.md"}  # README is the GitHub landing page only
 SKIP_DIRS = {"web"}  # the site sources themselves are not pages
 
@@ -72,8 +85,33 @@ def stage() -> int:
         src = WEB / name
         if src.is_dir():
             shutil.copytree(src, DOCS / name, dirs_exist_ok=True)
+    build_id = _build_id()
+    for name in WEB_ROOT_FILES:
+        src = WEB / name
+        if src.is_file():
+            text = src.read_text(encoding="utf-8")
+            (DOCS / name).write_text(
+                text.replace(BUILD_ID_PLACEHOLDER, build_id), encoding="utf-8"
+            )
     print(f"staged {len(files)} markdown files -> {DOCS.relative_to(ROOT)}")
     return len(files)
+
+
+def _build_id() -> str:
+    """Short commit sha, so a rebuilt site rotates the service-worker cache."""
+    try:
+        sha = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        if sha:
+            return sha
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    return time.strftime("%Y%m%d%H%M%S")
 
 
 def write_config() -> Path:
@@ -101,6 +139,40 @@ def stats() -> None:
 
 
 FLAGS = {"--serve", "--strict", "-s", "--stats"}
+
+# Prepended to </head> on every page. `{rel}` is the depth-correct prefix, so
+# the same block works at the site root and under a deploy subpath.
+PWA_HEAD = """<link rel="manifest" href="{rel}manifest.json">
+      <link rel="apple-touch-icon" href="{rel}assets/apple-touch-icon.png">
+      <meta name="apple-mobile-web-app-capable" content="yes">
+      <meta name="mobile-web-app-capable" content="yes">
+      <meta name="apple-mobile-web-app-title" content="logbook">
+      <meta name="theme-color" content="#a8342a" media="(prefers-color-scheme: light)">
+      <meta name="theme-color" content="#12110f" media="(prefers-color-scheme: dark)">
+      <script src="{rel}assets/pwa.js" data-sw="{rel}sw.js" defer></script>"""
+
+
+def inject_pwa() -> int:
+    """Add the PWA tags to every built page (see the module docstring).
+
+    Runs on the built site rather than the staged sources because the tags have
+    to sit inside <head>, which the theme renders and no partial exposes.
+    """
+    site = BUILD / "site"
+    pages = sorted(site.rglob("*.html"))
+    for page in pages:
+        rel = page.relative_to(site)
+        prefix = "../" * (len(rel.parts) - 1)
+        html = page.read_text(encoding="utf-8")
+        if 'rel="manifest"' in html:
+            continue
+        block = "\n".join(
+            "  " + line for line in PWA_HEAD.format(rel=prefix).splitlines()
+        )
+        page.write_text(
+            html.replace("</head>", block + "\n  </head>", 1), encoding="utf-8"
+        )
+    return len(pages)
 
 
 def _engine_python() -> str:
@@ -137,7 +209,10 @@ def main(argv: list[str]) -> int:
     ]
     if strict and not serve:
         command.append("--strict")
-    return subprocess.call(command + rest, cwd=ROOT)
+    code = subprocess.call(command + rest, cwd=ROOT)
+    if code == 0 and not serve:
+        print(f"injected PWA tags into {inject_pwa()} pages")
+    return code
 
 
 if __name__ == "__main__":
