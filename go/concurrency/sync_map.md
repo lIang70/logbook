@@ -2,10 +2,12 @@
 
 `sync.Map` 是 Go 官方提供的并发安全 Map，专为 **读多写少** (Read-Heavy) 场景优化。
 
+> **版本锚**：本文的 read/dirty 双 map 描述是 **Go ≤1.23** 的实现；1.20 起 `read` 字段已改为 `atomic.Pointer[readOnly]`，而 **1.24 起整个实现换成 `internal/sync.HashTrieMap`**——没有 `dirty`、`misses`、也没有晋升。读源码前先确认版本。
+
 ## TL;DR
 
 - 它是**读多写少专用结构**，不是“并发版 map”的通用替代：read map 原子读无锁，dirty map 加锁，**性能取决于命中率而不是并发度**。
-- 晋升是代价所在：读穿透到 dirty 就 `misses++`，`misses >= len(dirty)` 时把 dirty 提为 read 并重建——**频繁插入新 key 会持续触发复制，反而不如 `RWMutex + map`**。
+- 晋升是代价所在：读穿透到 dirty 就 `misses++`，`misses >= len(dirty)` 时把 dirty 提为 read（**只换指针，不复制**）——复制发生在**下一次插入新 key** 时，所以**频繁插新 key 会不断重建 dirty，反而不如 `RWMutex + map`**。
 - 删除是**延迟删除**：只把 entry 置 `nil` / `expunged`，真正的物理清理由下一次晋升/复制完成；所以删除后内存不一定立即下降。
 - 常见误用：把 `sync.Map` 当“避免锁”的万能钥匙。**如果每个 key 只被一个 goroutine 访问**（per-connection 状态那样），根本不需要任何并发容器。
 
@@ -21,7 +23,7 @@
 ```go
 type Map struct {
     mu Mutex
-    read atomic.Value // 存储 readOnly 结构体
+    read atomic.Pointer[readOnly] // Go≥1.20；更早是 atomic.Value
     dirty map[interface{}]*entry
     misses int // 记录 read map 穿透次数
 }

@@ -9,7 +9,7 @@
 - **`Display` 只渲染 message**，不渲染"kind: message"——这样两棵树对同一个错误的 diff 才能逐字比对。
 - **gRPC status code 是有损的**：`BudgetExceeded` 与 `RateLimit` 都映射到 `ResourceExhausted`，`PolicyDenied` 与 `Forbidden` 都映射到 `PermissionDenied`。只读 code 的 peer 会把**永久的预算失败当成可重试限流**、把**策略拒绝当成权限问题**。
 - 所以跨进程要传两样：**分类 + 可选的结构化 detail**，分类放在自己的 wire 类型里（`flowcraft.error.v1`），status code 退化成给通用中间件的粗提示。
-- **枚举要 `#[non_exhaustive]`**。加一类是契约变更，下游的 `match` 必须被迫承认，而不是默默走 `_ =>`。
+- **枚举要 `#[non_exhaustive]`**。它**强制下游写 `_ =>`**，于是新增变体不会破坏下游编译——代价是漏处理也不报错，所以新增类别必须在 release notes 里点名。
 
 ## 1. 分类
 

@@ -92,18 +92,18 @@ type pollDesc struct {
 
     cs atomic.Uint32 // 保护后两位的状态位
 
-    rg, wg uint32 // waitRead / waitWrite 序列号（防 ABA）
+    rg, wg uint32 // 可读/可写侧的二值信号量（pdReady / pdWait / 等待中的 G 指针）
     // ... 与 runtime 共享的字段（runtime 通过 linkname 访问）
 }
 ```
 
-- 它**不属于** runtime 的 g/m/p，而是 `internal/poll` 包里的普通结构。
-- 但 runtime 持有指向它的指针（通过 linkname 访问），因此能在事件就绪时直接找到它并 `goready` 等待中的 G。
+- **实体在 runtime**：`runtime.pollDesc` 由 runtime 的 `pollCache` 分配，持有 `rg`/`wg`、`fd`、`rseq`/`wseq` 等全部状态；`internal/poll` 这一侧只是一个 `runtimeCtx` 句柄。
+- 方向是 **runtime 导出、`internal/poll` 调用**：`//go:linkname` 把 runtime 的 `poll_runtime_pollOpen` / `poll_runtime_pollWait` 暴露出去，事件就绪时 runtime 直接按句柄找到 pollDesc 并 `goready` 等待中的 G。
 
 ### 3. `pollCache`（`pollDesc` 复用）
 
 - 频繁创建/销毁连接 = 频繁创建/销毁 `pollDesc`。
-- `internal/poll` 用一个 per-P 的 `pollCache`（里面一把基本无争用的 mutex）复用 `pollDesc` 链表，避免每次 `accept` 都走 `newpollDesc` → `mallocgc`。
+- runtime 用一个**包级单例** `pollCache`（一条空闲链表 + 一把 `lock`）复用 `pollDesc`，避免每次 `accept` 都走 `newpollDesc` → `mallocgc`。
 - 这是"一连接一 goroutine"模型下少被提到但很重要的优化点。
 
 ### 4. `netpollblock` / `goready`（park / ready 协同）

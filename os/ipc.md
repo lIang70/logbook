@@ -6,7 +6,7 @@
 
 ## TL;DR
 
-- **socket 文件是文件系统里的一个 inode**，它的权限位就是访问控制。`bind` 时权限由 `umask` 决定（常见结果是 0755 = 本机任何用户可连），所以**listen 之后必须显式 `chmod`**，不能指望 umask。
+- **socket 文件是文件系统里的一个 inode**，权限位就是访问控制。`bind` 时 mode = `0777 & ~umask`（常见 0755），而**连接方需要的是写位**：0755 只有 owner 能连，只有 umask 002/000 得到的 `0775`/`0777` 才是同组/所有人可连。正因为 umask 不可控，**listen 之后必须显式 `chmod`**。
 - **对端身份只能靠内核给**：Linux 用 `SO_PEERCRED`，BSD/macOS 用 `getpeereid` / `LOCAL_PEERCRED`。协议里客户端自报的 uid 是攻击者可控的字段，不是身份。
 - **stale socket 是重启杀手**：进程被 `kill -9` 后 socket 文件留在磁盘上，`bind` 直接 `EADDRINUSE`。判据是"连一下"——`ECONNREFUSED` 说明没人听（可安全删除），连上说明还活着（别删）。
 - **`SCM_RIGHTS` 传的 fd 是共享同一个 open file description**：收发双方都能用，**共享文件偏移**，谁都不能替对方关。传错方向就是"你关了它还在用"。
@@ -20,7 +20,7 @@
 
 ## 2. 权限：socket 文件的 mode 就是 ACL
 
-`bind(2)` 创建 socket 文件时用 `0777 & ~umask`，一般 umask 022 → **0755**。也就是说**默认状态下本机任何用户都能连你的 socket**，而大部分人以为"本地 socket 天然只有我能连"。
+`bind(2)` 创建 socket 文件时用 `0777 & ~umask`，一般 umask 022 → **0755**。但**能不能连看的是写位**（Linux `unix_find_other()` 走 `inode_permission(MAY_WRITE)`，FreeBSD `unp_connect()` 走 `VOP_ACCESS(VWRITE)`）：0755 的 other 只有 `r-x`，第三方用户**连不上**；真正暴露的是 umask 002/000 产生的 `0775` / `0777`。
 
 正确做法是**两步都要做**：
 
@@ -37,7 +37,7 @@ if err := os.Chmod(path, 0o600); err != nil { /* 关掉 listener，清理目录 
 - **目录权限比文件权限更重要**：`0700` 目录 + `0600` 文件是标准组合（`core/secret/keychain` 就是"每个 secret 一个 0600 文件放在 0700 目录下"）。只有文件权限而目录是 0755，别人删不掉也改不了，但可以遍历枚举。
 - **`umask` 是不可信的**：调用方的 umask 可能是 0。显式 `chmod` 是唯一可靠的方式。
 
-> 判据：`ls -l` 看 socket 的 mode。出现 `srwxrwxrwx` 或 `srwxr-xr-x`，就是一个"本机任意用户可连"的接口——可能没事，但必须是有意识的决定。
+> 判据：`ls -l` 看 socket 的 mode，**重点看写位**。`srwxrwxrwx`（所有人）与 `srwxrwxr-x`（同组）是真实的可连暴露面；`srwxr-xr-x` 只有 owner 能连——但它能出现本身就说明 umask 不可控，仍应显式 `chmod 0600`。
 
 ## 3. 身份：内核给的和对方说的不是一回事
 
@@ -118,7 +118,7 @@ if 文件存在:
 
 ## 9. 常见反模式
 
-- **不 `chmod` 就上线**：默认 0755，本机任何用户可连。
+- **不 `chmod` 就上线**：默认 0755 虽然只有 owner 能连，但调用方 umask 一旦是 002/000 就变成同组/所有人可连，而你看不出来。
 - **启动时无条件 `unlink`**：造出两个进程同时"独占"的假象。
 - **用协议里的 uid 做鉴权**：客户端可以随便填。
 - **传 fd 后两边都关**：偶发 `EBADF`，或者更糟——关掉的是别人刚复用的 fd 编号。

@@ -111,4 +111,4 @@ Agent fundamentals, prompt engineering (skeleton / patterns / anti-patterns / si
 - **Browse**: the rendered site at <https://liang70.github.io/logbook/> — cards per area, full-text search, dark mode
 - **Browse (repo)**: scroll the Index above (every path is a link)
 - **Search**: `rg "keyword"` from the repo root, or the site's search box (`/`)
-- **Build / preview locally**: `make serve` → <http://127.0.0.1:8000> (MkDocs Material, config in `mkdocs.yml`)
+- **Build / preview locally**: `make serve` → <http://127.0.0.1:8000> (Zensical, config in `web/mkdocs.yml`)
