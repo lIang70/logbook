@@ -2,6 +2,14 @@
 
 Go 的内存分配器基于 Google 的 **TCMalloc** (Thread-Caching Malloc) 算法，核心目标是**减少锁竞争**和**提高内存分配效率**。
 
+## TL;DR
+
+- 三级结构：**mcache（绑 P，无锁）→ mcentral（全局，要加锁）→ mheap（唯一直接向 OS 要内存）**；分配的快慢只取决于“这次走了哪一级”。
+- 小对象（16B~32KB）走 mcache 是**无锁路径**——所以性能问题几乎不在“分配器慢”，而在“分配次数多”和“指针多导致 GC 扫描贵”。
+- 三档分法：tiny（<16B，**只收 noscan**，合并进同一个 16B 块）/ small（mcache）/ large（>32KB，直接 mheap，**可能触发 GC**）。
+- 常见误解：mspan 大小是 `npages × 8KB`，**不是固定 8KB**；一个 mspan 只服务一个 size class。
+- 代码层面的抓手永远是**减少分配**（逃逸分析 + 复用 + 预分配），调 size class 不是你能控制的事。
+
 ## 核心组件
 
 Go 的内存管理采用层级结构：
@@ -61,3 +69,12 @@ Go 根据对象大小采用不同的分配策略：
 4. 若 `mcache` 缺页 -> `mcentral` (有锁)。
 5. 若 `mcentral` 缺页 -> `mheap` (有锁)。
 6. 若 `mheap` 不足 -> `OS` (系统调用)。
+
+## 相关链接
+
+- [Escape Analysis](../language/escape_analysis.md)：决定对象到底上不上堆的那一步（比任何分配器调优都值）
+- [Escape Analysis 案例与性能优化](../language/escape_analysis_cases.md)：真实代码里的逃逸形状
+- [GC](gc.md)：分配出来的对象怎么被扫、被回收
+- [pprof 与性能读法](pprof.md)：从 heap / alloc profile 定位分配热点
+- [Memory Management](../../os/memory.md)：分页与虚拟内存（mheap 之下）
+- [桌面 agent 的性能治理](../engineering/optimization.md)：减少分配的实战回合

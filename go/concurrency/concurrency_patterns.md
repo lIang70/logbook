@@ -2,6 +2,14 @@
 
 Go 的 CSP 模型鼓励 "Do not communicate by sharing memory; instead, share memory by communicating."。以下是几种经典的并发设计模式。
 
+## TL;DR
+
+- 所有模式只围绕一件事：**每个 goroutine 的退出条件**。没有退出条件的 goroutine 就是泄漏，`ctx.Done()` 是默认答案。
+- 五个基础形状（generator / fan-in / pipeline / fan-out worker pool / tee）+ 两个“保险丝”（`orDone` 包住输入、`errgroup` 首个错误取消其余）覆盖了经大多数场景：**先挑形状，再谈优化**。
+- **限并发用信号量（buffered channel），不是无限 `go func`**：`sem <- struct{}{}` 必须在 `go` **之前**执行；放进 goroutine 里就只是限流，不是限并发。
+- **channel 只由发送方关闭**；`tee` 里“把输出置 nil 禁用对应 case”是 nil channel 语义最实用的落地。
+- 取消是**协作式**的：只要有一个环节不监听 ctx，整条 pipeline 就退不干净——所以每个 stage 的 select 都必须带 `<-ctx.Done()`。
+
 > 经验法则：**任何启动 goroutine 的地方，都要明确它的退出条件**（`context`/`done`、输入 channel 关闭、计数完成等），否则非常容易 goroutine 泄漏。
 
 ## 1. Generator (生成器)
@@ -336,3 +344,12 @@ wg.Wait()
 - **避免 goroutine 泄漏**：每个 goroutine 都要能因 `ctx.Done()` 或输入关闭而退出；必要时用 `orDone`。
 - **select + nil channel**：把某个 channel 置 `nil` 可临时禁用对应 case（例如 Tee 的写两次技巧）。
 - **close 两次会 panic**：需要确保只 close 一次（用 `sync.Once` 或由唯一拥有者关闭）。
+
+## 相关链接
+
+- [Channels (通道) Implementation](channels.md)：这些模式底下的 runtime 语义（锁、sudog、select 伪随机）
+- [Go 并发场景与模板速查](concurrency_scenarios_templates.md)：从“我要干什么”反查用哪个模式
+- [sync.Map Implementation](sync_map.md)：不用 channel 的那条路（以及它的适用边界）
+- [Go Scheduler (GMP 模型)](../runtime/scheduler.md)：阻塞与唤醒的真实代价
+- [测试布局](../engineering/testing.md)：soak 跑起停才能查出 goroutine 泄漏
+- [Concurrency](../../os/concurrency.md)：内存模型与同步原语的底层

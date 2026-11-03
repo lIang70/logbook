@@ -2,6 +2,14 @@
 
 逃逸分析是 Go 编译器在编译阶段进行的一项分析，用于决定变量应该分配在 **栈 (Stack)** 上还是 **堆 (Heap)** 上。
 
+## TL;DR
+
+- 判据只有一条：**变量是否在函数返回后仍被引用**——返回指针、存进全局/容器、被闭包捕获、长度运行时才知道，这四类才上堆。
+- **「传 `interface{}` 就逃逸」是不准的**：根因是**装箱**（值要放进 `eface.data` 就需要可寻址存储），而不是“动态派发”；调用点能内联/去虚拟化时，`-m` 会直接报 `does not escape`。
+- **2KB 初始栈不是逃逸判据**：真正决定的是“是否外传”与“是否超过编译器栈变量上限”（`maxStackVarSize` 10MB / `maxImplicitStackVarSize` 64KB）。
+- 工具只有一条命令：`go build -gcflags="-m -l"`——**必须带 `-l`**，否则内联会把逃逸结果盖掉，你看到的是“优化后”的假象。
+- 优化顺序：预分配 → 小对象传值代替指针 → 热点去 interface；**不要为了逃逸而牺牲可读性**，先用 pprof 证明这里是热点。
+
 ## 核心原则
 
 - **栈 (Stack)**: 分配和回收极快（指针移动），不需要 GC 参与。函数返回时自动销毁。
@@ -85,3 +93,11 @@ go build -gcflags="-m -l" main.go
 1. **多传值，少传指针**: 对于小对象（如基本类型、小结构体），传值复制的开销往往小于 GC 的开销。
 2. **预分配**: `make` 切片或 Map 时，如果长度确定，尽量使用常量，避免动态扩容和大小不确定导致的逃逸。
 3. **小心 interface{}**: 热点代码路径尽量避免使用 `interface{}`。
+
+## 相关链接
+
+- [Escape Analysis 案例与性能优化](escape_analysis_cases.md)：真实代码里的逃逸形状与修复前后对比
+- [Go Memory Allocator](../runtime/memory_allocator.md)：逃逸之后对象落到哪一级缓存
+- [GC](../runtime/gc.md)：上堆的代价从这里算（扫描 + 回收）
+- [pprof 与性能读法](../runtime/pprof.md)：先证明这里是热点，再动手
+- [桌面 agent 的性能治理](../engineering/optimization.md)：减少分配的实战回合

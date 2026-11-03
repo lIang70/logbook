@@ -1,5 +1,15 @@
 # GC
 
+## TL;DR
+
+- Go 的 GC 是**并发三色标记清除**，STW 只出现在标记准备与标记终止两处；停顿主要是**扫栈**的代价，所以它跟 goroutine 数量相关，不单纯跟堆大小相关。
+- **混合写屏障（1.8+）是并发标记能成立的前提**：赋值**之前**先把旧值和新值都着色——旧值管删边、新值管插入边，三个地方容易写反：判据是「槽位对象黑 + 被引用对象白」、旧值也要 shade、屏障必须在赋值前。
+- **非分代 + 非压缩**：对象又多又小时扫描贵，且堆会碎片化但**不会移动对象**——所以指针少、对象少比“调大 GOGC”更有效。
+- `GOGC` 是「堆增长率」不是「内存上限」；要硬上限得用 `GOMEMLIMIT`（1.19+），两者语义不同，混用会让延迟变成镒齿。
+- 排查顺序：`GODEBUG=gctrace=1` 看周期 → pprof 看分配来源 → 最后才谈调参。
+
+## 定位与算法类型
+
 Go 使用并发, 三色标记清除的垃圾回收器.
 
 - 主要目标
@@ -60,3 +70,12 @@ export GOGC=100        # 默认值，增长100%后触发GC
 export GOGC=off        # 完全关闭GC
 export GODEBUG=gctrace=1  # 输出GC跟踪信息
 ```
+
+## 相关链接
+
+- [Write Barriers](write_barrier.md)：写屏障的两种着色与「赋值前执行」的语义
+- [Go Memory Allocator](memory_allocator.md)：对象从哪来、走哪一级缓存（扫描成本的上游）
+- [Go Scheduler](scheduler.md)：扫栈停顿与 P / G 的关系
+- [pprof 与性能读法](pprof.md)：从 profile 定位「谁在分配」
+- [Memory Management](../../os/memory.md)：分页、虚拟内存、TLB 等底层机制
+- [Escape Analysis](../language/escape_analysis.md)：让对象根本不上堆的那一步

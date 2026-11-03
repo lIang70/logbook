@@ -1,5 +1,13 @@
 # Defer, Panic, Recover
 
+## TL;DR
+
+- `defer` 现已（1.14+ open-coded）接近一次普通函数调用，但**不是零成本**：仍要栈上登记、返回点按位图分支；而且**有 defer 的函数可能失去部分内联机会**。
+- 参数在**声明时**求值：`defer fmt.Println(time.Now())` 打的是注册时刻的时间，不是执行时刻。这是最高频的理解错误。
+- `recover` 只在**同一个 goroutine、且由 defer 直接调用**时有效；包一层 helper（`defer func(){ helper() }()`）里拿不到 panic，只能得到 nil 并让它继续向上传播。
+- panic 只沿**当前 goroutine** 的栈展开：**没有 recover 的子 goroutine panic 会终止整个进程**——所以每个 `go func()` 都该有兜底。
+- recover 之后函数**从 defer 所在函数正常返回**，不会回到 panic 点继续执行。
+
 ## Defer
 
 Go 的 `defer` 语句用于延迟函数调用，常用于资源释放（解锁、关闭文件）。
@@ -55,3 +63,11 @@ go func() {
     // 业务逻辑
 }()
 ```
+
+## 相关链接
+
+- [Go 工程约定](../engineering/conventions.md)：panic 边界与可选接口（哪里允许 panic）
+- [Channels (通道) Implementation](../concurrency/channels.md)：close / 阻塞与 defer 解锁的配合
+- [Concurrency](../../os/concurrency.md)：信号与异常在系统层的对应物
+- [测试布局](../engineering/testing.md)：错误分支怎么被覆盖
+- [错误分类（跨语言、跨进程）](../../rust/engineering/errors.md)：panic vs error 的两棵树

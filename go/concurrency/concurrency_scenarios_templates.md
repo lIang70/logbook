@@ -4,6 +4,14 @@
 
 > 建议阅读顺序：先看 `channels.md`（语义与坑），再看 `concurrency_patterns.md`（组合模式），最后用本页当“选型与模板索引”。
 
+## TL;DR
+
+- 这页是**索引不是教程**：从“我要干什么”反查模板组合（批量 IO / 不固定 worker / 生产者消费者 / 流水线 / 扇入 / 广播 / 限流 / 超时 / 优雅退出 / 单飞去重 / 竞速）。
+- 四条总原则决定一切：**生命周期**（能退出）、**取消传播**（`WithTimeout`/`WithCancel` + `defer cancel`）、**并发上限**（默认限并发）、**关闭规则**（只由发送方 close）。
+- 最高频的三对：批量 IO → `errgroup.WithContext`（任一失败取消全部）；不固定 worker → semaphore（acquire 在 `go` 之前）；生产者消费者 → 发完 `close(jobs)`、`wg.Wait()` 后关 results。
+- **竞速（Hedged / Race）是唯一故意浪费的模式**：取最快成功、其余取消——只有当 P99 长尾本身就是核心指标时才用，它是拿钱换延迟。
+- 选型判据不是“哪个模式高级”，而是“**失败时谁负责取消、谁负责 close**”。这两问答不上来，模板抄过去也是错的。
+
 ## 0. 总原则（先记住这 4 条）
 
 - **生命周期**：任何 goroutine 都要能因 `ctx.Done()` / 输入关闭 / 计数完成而退出。
@@ -290,7 +298,11 @@ func firstSuccess[T any](parent context.Context, fns ...func(context.Context) (T
 - “最快回复”通常应理解为 **最快成功（2xx/无 error）**；否则最快的可能是错误/超时。
 - 要让“取消真的生效”，下游调用必须使用可取消的 API（例如 `http.NewRequestWithContext`、DB/RPC 的 ctx 版本）。
 
-## 参考
+## 相关链接
 
-- `channels.md`：channel 语义与坑（close/缓冲/select/nil/泄漏等）
-- `concurrency_patterns.md`：Generator/Fan-In/Pipeline/Worker Pool/orDone/tee/errgroup/semaphore 等模式代码
+- [Channels (通道) Implementation](channels.md)：channel 语义与坑（close / 缓冲 / select / nil / 泄漏）
+- [Go Concurrency Patterns](concurrency_patterns.md)：Generator / Fan-In / Pipeline / Worker Pool / orDone / tee / errgroup / semaphore 的模式代码
+- [sync.Map Implementation](sync_map.md)：不用 channel 的那条路（以及它的适用边界）
+- [Go Scheduler (GMP 模型)](../runtime/scheduler.md)：阻塞/唤醒发生在调度器哪一层
+- [测试布局](../engineering/testing.md)：限并发与泄漏要用 soak 才测得出来
+- [Concurrency](../../os/concurrency.md)：内存模型与同步原语的底层

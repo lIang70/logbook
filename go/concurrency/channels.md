@@ -2,6 +2,14 @@
 
 Channel 是 Go 并发模型 (CSP) 的核心。它在 Runtime 中由 `hchan` 结构体表示。
 
+## TL;DR
+
+- Channel **不是无锁的**：`hchan` 里有一把 `lock` 保护所有字段，元素拷贝就在持锁期间做——**大元素 / 含指针元素会拉长持锁时间**，这是热路径上的真实成本。
+- 发送有三条路径：有人等待就**直接拷贝绕过缓冲区**（最快）；否则进环形缓冲；否则包成 `sudog` 挂 sendq 阻塞。所以“缓冲多大”影响的是延迟曲线，不是吞吐上限。
+- `close` 只有三条硬规则：**只由发送方关、只关一次、向已关 channel 发送必 panic**；接收侧靠 `v, ok` 或 `range` 判结束。多生产者要用 `sync.Once` 或集中关闭者。
+- `select` 的公平是**伪随机**（不保证顺序）；`default` 让它永不阻塞，是 busy loop 的常见来源；**nil channel 的 case 永远不就绪，正好用来动态开关分支**。
+- 泄漏的根因几乎都是“阻塞在 channel 上且没有退出条件”——循环必须监听 `ctx.Done()`，无缓冲 channel 会把泄漏从“偷偷积压”变成“当场卡死”（这是优点）。
+
 ## 核心数据结构: hchan
 
 ```go
@@ -160,3 +168,11 @@ func produce(ctx context.Context) <-chan int {
 - **select 不要滥用 default**，避免 busy loop。
 - **给 goroutine 明确退出条件**（`ctx.Done()`/输入关闭/计数完成）。
 - **控制并发与背压**：worker pool / semaphore / 小缓冲。
+
+## 相关链接
+
+- [Go Concurrency Patterns](concurrency_patterns.md)：orDone / tee / 扇入扇出等结构
+- [Go 并发场景与模板速查](concurrency_scenarios_templates.md)：先找场景，再拿模板
+- [sync.Map Implementation](sync_map.md)：另一条状态的共享方式（以及它为什么不是万能钥匙）
+- [Go Scheduler (GMP 模型)](../runtime/scheduler.md)：挂起/唤醒（gopark）发生在调度器的哪一层
+- [Concurrency](../../os/concurrency.md)：内存模型、原子操作与可见性

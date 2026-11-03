@@ -2,6 +2,14 @@
 
 Go 的调度器 (Scheduler) 是运行时系统的核心，负责将成千上万个 Goroutine (G) 分配到少量的系统线程 (M) 上执行。
 
+## TL;DR
+
+- GMP 的分工一句话：**G 是协程，M 是内核线程，P 是调度上下文（数量 = `GOMAXPROCS`），且 M 必须持有 P 才能跑 G**——后面所有现象都从这句推。
+- 三个机制解决三类问题：**work stealing** 解决负载不均（本地队列空 → 看全局队列 → 随机偷别人一半）、**hand off** 解决 syscall 阻塞（M 卡住就释放 P，让别的 M 接手）、**异步抢占**解决饿死（1.14+：sysmon 发现单 G 跑超 10ms 就发 `SIGURG`）。
+- 1.14 之前是**协作式抢占**：只在函数调用时检查，**死循环抢不进来**；所以“纯计算死循环 + 小 GOMAXPROCS”能把整个程序挂住。
+- `sysmon` 是不绑 P 的后台线程：检测死锁、每 2 分钟强制 GC、抢占长任务、收回被 syscall 卡太久的 P。
+- 工程抓手：**goroutine 泄漏看 goroutine profile；syscall 卡顿看 hand off；容器里要警惕 `GOMAXPROCS` 与 cgroup CPU quota 不一致**（老版本只按核数算）。
+
 ## 核心模型: GMP
 
 ### G (Goroutine)
@@ -81,3 +89,13 @@ Global Queue (Lock)
   - 强制 GC (每2分钟)。
   - 抢占长时间运行的 G。
   - 收回因 syscall 阻塞过久的 P。
+
+## 相关链接
+
+- [GC](gc.md)：STW、栈扫描与 sysmon 的强制 GC
+- [netpoll (Go 网络 I/O 模型)](netpoll.md)：网络阻塞不会占住 M，这是 hand off 的另一半
+- [Write Barriers](write_barrier.md)：并发标记与 mutator 的交汇点
+- [pprof 与性能读法](pprof.md)：goroutine / block / mutex profile 的读法
+- [Channels (通道) Implementation](../concurrency/channels.md)：G 在 channel 上的阻塞与唤醒
+- [调度器对比](../../os/scheduler_comparison.md)：CFS / BFS 等与 Go 调度器的对照
+- [Concurrency](../../os/concurrency.md)：内存模型与同步原语的底层

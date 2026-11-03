@@ -1,5 +1,13 @@
 # Interface & Reflection (接口与反射)
 
+## TL;DR
+
+- 接口值不是一个指针，是**两字宽**的（有方法 `iface{tab, data}` / 空接口 `eface{_type, data}`）；`nil` 判定要求**两者都为 nil**。
+- 最高频的 bug：**把 nil 具体指针赋给接口，接口不等于 nil**（type 字段不为空），于是 `err != nil` 成立但里面没东西可调。
+- 方法调用是 `tab->fun[index]` 的间接跳转，比直接调用贵；**但真正贵的是装箱导致的分配和“阻碍内联/去虚拟化”**，不是跳转本身。
+- 反射三定律里落地最难的是第三律：要改值必须**可设置**（传指针 + `Elem()`），否则 `SetFloat` 直接 panic。
+- 反射慢 1~2 个数量级；热路径的正解是**代码生成**（或局部 unsafe），而不是“少用一点反射”。
+
 ## Interface (接口)
 
 Go 的接口是隐式实现的 (Duck Typing)。
@@ -71,3 +79,11 @@ type eface struct {
 - 反射涉及大量的类型检查和内存分配。
 - 相比直接调用，反射慢 1-2 个数量级。
 - 尽量避免在热点代码路径中使用反射 (如 JSON 序列化库通常会使用 `unsafe` 或代码生成来优化)。
+
+## 相关链接
+
+- [Escape Analysis](escape_analysis.md)：接口装箱为什么会把值顶到堆上
+- [Defer, Panic, Recover](defer_panic_recover.md)：反射写错时的 panic 长什么样
+- [Go 工程约定](../engineering/conventions.md)：可选接口与 panic 边界
+- [分层与扩展点](../architecture/layering.md)：用接口做扩展点的代价（契约 + registry）
+- [pprof 与性能读法](../runtime/pprof.md)：确认反射 / 装箱是否真是热点

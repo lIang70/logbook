@@ -2,6 +2,13 @@
 
 `sync.Map` 是 Go 官方提供的并发安全 Map，专为 **读多写少** (Read-Heavy) 场景优化。
 
+## TL;DR
+
+- 它是**读多写少专用结构**，不是“并发版 map”的通用替代：read map 原子读无锁，dirty map 加锁，**性能取决于命中率而不是并发度**。
+- 晋升是代价所在：读穿透到 dirty 就 `misses++`，`misses >= len(dirty)` 时把 dirty 提为 read 并重建——**频繁插入新 key 会持续触发复制，反而不如 `RWMutex + map`**。
+- 删除是**延迟删除**：只把 entry 置 `nil` / `expunged`，真正的物理清理由下一次晋升/复制完成；所以删除后内存不一定立即下降。
+- 常见误用：把 `sync.Map` 当“避免锁”的万能钥匙。**如果每个 key 只被一个 goroutine 访问**（per-connection 状态那样），根本不需要任何并发容器。
+
 ## 核心设计思路
 
 通过 **空间换时间**，维护两个 Map：
@@ -58,3 +65,11 @@ type readOnly struct {
 
 - **缓存**: Key 集合稳定，读取频繁。
 - **不适用**: 频繁插入新 Key 的场景（会导致频繁的 dirty -> read 晋升和数据复制，性能不如 `RWMutex + map`）。
+
+## 相关链接
+
+- [Go Concurrency Patterns](concurrency_patterns.md)：什么时候该用锁、什么时候该用 channel
+- [Channels (通道) Implementation](channels.md)：另一条共享状态的路径（同样有锁）
+- [Go Scheduler (GMP 模型)](../runtime/scheduler.md)：goroutine 挂起/唤醒的真实代价
+- [Concurrency](../../os/concurrency.md)：内存模型与可见性的底层
+- [pprof 与性能读法](../runtime/pprof.md)：mutex profile 看锁竞争
