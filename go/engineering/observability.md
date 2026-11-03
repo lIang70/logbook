@@ -59,7 +59,7 @@ log.Info("runtime assembled",
 
 - trace 里给每个 span 打 `(turn, agent, tool, prompt_segment)` 四元组，失败归因从"哪里错了"收敛到"哪一行 prompt 错了"。
 - 线上 trace → 离线 dataset：`(input, expected_trajectory, expected_outcome)` 三元组，可以直接 replay 失败 case（见 [评测](../../ai/evals.md)）。
-- 成本按 `agent.name` / 模型 group by，找"钱花在谁身上"；这是多 agent 系统唯一现实的成本治理手段。
+- 成本按 `agent.name` / 模型 group by，找"钱花在谁身上"；这是成本归因的主要手段（限额与降级见 [沙箱与权限执行](../../ai/harness/sandbox.md) §5、[版本化与灰度](../../ai/harness/rollout.md) §4）。
 
 ## 6. 反模式
 

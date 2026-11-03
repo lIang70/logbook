@@ -127,10 +127,11 @@ Disk -> Kernel Buffer -> User Buffer -> Kernel Socket Buffer -> Network
 
 ### 磁盘调度算法（概念）
 
-- **FCFS**：先来先服务
-- **SSTF**：最短寻道时间优先
-- **SCAN**：电梯算法，磁头来回扫描
-- **C-SCAN**：循环扫描，磁头单向移动
+> **先看现实**：现代内核里这四者基本不在跑——CFQ 在 5.0 已删，现在是 `none` / `mq-deadline` / `kyber` / `bfq`（`/sys/block/<dev>/queue/scheduler` 可切换）。SSD/NVMe 根本没有寻道，`cfq` 那套寻道优化在这里无意义。
+>
+> 真正的手杖：**SSD 直接 `none`**（最少的软件排队）；需要延迟上限用 `mq-deadline`；要吞吐与公平性用 `bfq`；要限速用 `kyber`。
+
+FCFS / SSTF / SCAN / C-SCAN 只是 **HDD 时代的教科书模型**：FCFS 先来先服务、SSTF 最短寻道优先、SCAN 电梯来回、C-SCAN 单向循环。理解它们只为了读懂老文献。
 
 ### RAID (Redundant Array of Independent Disks)
 
