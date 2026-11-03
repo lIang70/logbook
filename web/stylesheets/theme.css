@@ -703,6 +703,7 @@ body:has(.home) .md-sidebar--secondary {
 .md-typeset .area-card--sub {
   grid-column: 1 / -1;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 1.1rem;
   padding: 0.85rem 1.15rem;
@@ -712,6 +713,7 @@ body:has(.home) .md-sidebar--secondary {
 
 .md-typeset .area-card--sub .area-card__tagline {
   flex: 1;
+  min-width: 0;
   padding-right: 0;
 }
 
@@ -998,6 +1000,29 @@ body:has(.home) .md-sidebar--secondary {
   .md-typeset .sub-grid,
   .md-typeset .home__cols {
     grid-template-columns: 1fr;
+  }
+
+  /* The sub-card's row layout needs ~500px to read; below that the tagline is
+     squeezed into a tall thin column while the other three items sit on its
+     first baseline. Stack it like a normal card instead, and give the count
+     room so the last tagline line cannot run underneath it. */
+  .md-typeset .area-card--sub {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+    padding: 1.05rem 1.15rem 1.35rem;
+  }
+
+  .md-typeset .area-card--sub .area-card__tagline {
+    padding-right: 3rem;
+  }
+
+  .md-typeset .area-card--sub .area-card__count {
+    position: absolute;
+    right: 1.05rem;
+    bottom: 0.65rem;
+    align-self: auto;
+    font-size: 1.45rem;
   }
 
   .md-typeset .hero::before {
